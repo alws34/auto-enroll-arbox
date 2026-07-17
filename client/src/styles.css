@@ -1,0 +1,23 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #0e0e10; color: #eee; }
+.app-nav { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #2a2a2e; align-items: center; }
+.app-nav a { color: #eee; text-decoration: none; font-size: 14px; }
+.app-main { padding: 12px 16px 80px; max-width: 480px; margin: 0 auto; }
+.btn { border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+.btn-primary { background: #3ab0f2; color: #041; }
+.btn-secondary { background: #444; color: #eee; }
+.btn-link { background: none; border: none; color: #3ab0f2; margin-left: auto; cursor: pointer; }
+.mock-input { display: block; width: 100%; margin-bottom: 8px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1a1d; color: #eee; }
+.quota-strip { font-size: 12px; opacity: 0.7; margin-bottom: 10px; }
+.day-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
+.day-tab { flex: 0 0 auto; padding: 8px 12px; border-radius: 20px; border: 1px solid #333; background: #1a1a1d; color: #eee; }
+.day-tab-active { background: #3ab0f2; color: #041; border-color: #3ab0f2; }
+.class-list { display: flex; flex-direction: column; gap: 8px; }
+.class-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2e; border-radius: 10px; padding: 10px 12px; }
+.class-row-time { font-weight: bold; }
+.class-row-meta { font-size: 12px; opacity: 0.7; }
+.class-row-status { font-size: 12px; color: #e0a000; margin-top: 4px; }
+.status-scheduled { color: #3ab04a; }
+.page-status { text-align: center; opacity: 0.7; margin-top: 40px; }
+.page-error { color: #e05050; }
+.login-form { display: flex; flex-direction: column; gap: 8px; max-width: 320px; margin: 80px auto; padding: 0 16px; }
