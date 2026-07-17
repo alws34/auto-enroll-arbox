@@ -21,7 +21,7 @@ async function request(path, options = {}) {
 export const api = {
 	login: (username, password) => request("/login", { method: "POST", body: JSON.stringify({ username, password }) }),
 	logout: () => request("/logout", { method: "POST" }),
-	getSchedule: (days = 7) => request(`/schedule?days=${days}`),
+	getSchedule: (days = 7, from) => request(`/schedule?days=${days}${from ? `&from=${from}` : ""}`),
 	getCredentials: () => request("/me/arbox-credentials"),
 	setCredentials: (email, password) => request("/me/arbox-credentials", { method: "PUT", body: JSON.stringify({ email, password }) }),
 	getWebhook: () => request("/me/webhook"),
@@ -31,6 +31,7 @@ export const api = {
 	getNotificationPrefs: () => request("/me/notifications"),
 	setNotificationPrefs: (email, emailNotificationsEnabled) =>
 		request("/me/notifications", { method: "PUT", body: JSON.stringify({ email, emailNotificationsEnabled }) }),
+	sendTestEmail: () => request("/me/notifications/test", { method: "POST" }),
 	scheduleJob: (scheduleId, classDate) => request("/jobs", { method: "POST", body: JSON.stringify({ scheduleId, classDate }) }),
 	cancelJob: (id) => request(`/jobs/${id}`, { method: "DELETE" }),
 	cancelArboxRegistration: (scheduleId) => request(`/schedule/${scheduleId}`, { method: "DELETE" }),

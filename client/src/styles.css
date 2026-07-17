@@ -24,7 +24,7 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .job-status-failed { background: #e05050; color: #fff; }
 .job-status-missed { background: #888; color: #fff; }
 .job-status-cancelled { background: #666; color: #fff; }
-.status-legend { position: fixed; top: 12px; right: 12px; z-index: 50; display: flex; flex-direction: column; gap: 4px; background: rgba(20, 20, 22, 0.9); border: 1px solid #333; border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+.status-legend { position: fixed; top: 56px; right: 12px; z-index: 50; display: flex; flex-direction: column; gap: 4px; background: rgba(20, 20, 22, 0.9); border: 1px solid #333; border-radius: 8px; padding: 8px 10px; font-size: 11px; }
 .status-legend-item { display: flex; align-items: center; gap: 6px; }
 .status-legend-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .page-status { text-align: center; opacity: 0.7; margin-top: 40px; }
@@ -50,3 +50,8 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .modal-note { font-size: 12px; opacity: 0.7; }
 .modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .modal-actions .btn { text-align: center; text-decoration: none; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+.week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; }
+.week-nav .section-heading { margin: 0; text-align: center; flex: 1; font-size: 12px; }
+.week-nav .btn { padding: 4px 12px; font-size: 16px; line-height: 1; }

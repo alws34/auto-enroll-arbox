@@ -7,12 +7,25 @@ import { StatusLegend } from "../components/StatusLegend.jsx";
 import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
 import { ClassDetailModal } from "../components/ClassDetailModal.jsx";
 
+const WEEK_LENGTH = 7;
+
 function dayLabel(dateStr) {
 	const d = new Date(`${dateStr}T00:00:00`);
 	return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
 }
 
+function todayIso() {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysIso(dateStr, delta) {
+	const d = new Date(`${dateStr}T00:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + delta);
+	return d.toISOString().slice(0, 10);
+}
+
 export function SchedulePage() {
+	const [weekStart, setWeekStart] = useState(todayIso());
 	const [classes, setClasses] = useState([]);
 	const [quota, setQuota] = useState({ used: 0, limit: 0 });
 	const [selectedDate, setSelectedDate] = useState(null);
@@ -24,10 +37,10 @@ export function SchedulePage() {
 		setLoading(true);
 		setError(null);
 		try {
-			const data = await api.getSchedule(7);
+			const data = await api.getSchedule(WEEK_LENGTH, weekStart);
 			setClasses(data.classes);
 			setQuota(data.quota);
-			if (!selectedDate && data.classes.length > 0) setSelectedDate(data.classes[0].date);
+			setSelectedDate(weekStart);
 		} catch (err) {
 			setError(err.message);
 		} finally {
@@ -37,12 +50,12 @@ export function SchedulePage() {
 
 	useEffect(() => {
 		load();
-	}, []);
+	}, [weekStart]);
 
-	const days = useMemo(() => {
-		const uniqueDates = [...new Set(classes.map((c) => c.date))].sort();
-		return uniqueDates.map((date) => ({ date, label: dayLabel(date) }));
-	}, [classes]);
+	const days = useMemo(
+		() => Array.from({ length: WEEK_LENGTH }, (_, i) => addDaysIso(weekStart, i)).map((date) => ({ date, label: dayLabel(date) })),
+		[weekStart]
+	);
 
 	const visibleClasses = classes.filter((c) => c.date === selectedDate);
 
@@ -74,7 +87,17 @@ export function SchedulePage() {
 		<div className="schedule-page">
 			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
-			<h3 className="section-heading">My schedule</h3>
+			<div className="week-nav">
+				<button className="btn btn-secondary" onClick={() => setWeekStart((w) => addDaysIso(w, -WEEK_LENGTH))}>
+					‹
+				</button>
+				<h3 className="section-heading">
+					My schedule — {days[0]?.date} to {days[WEEK_LENGTH - 1]?.date}
+				</h3>
+				<button className="btn btn-secondary" onClick={() => setWeekStart((w) => addDaysIso(w, WEEK_LENGTH))}>
+					›
+				</button>
+			</div>
 			<WeeklyCalendar days={days} classes={classes} onSelect={setModalClass} />
 			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
 			<div className="class-list">

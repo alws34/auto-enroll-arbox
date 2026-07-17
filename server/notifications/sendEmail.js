@@ -52,6 +52,15 @@ export async function sendPasswordResetEmail({ transporter, fromAddress, toEmail
 	});
 }
 
+export async function sendTestEmail({ transporter, fromAddress, toEmail }) {
+	await transporter.sendMail({
+		from: fromAddress,
+		to: toEmail,
+		subject: "Test notification",
+		text: "This is a test email from your Arbox auto-enroll app. If you received this, email notifications are working.",
+	});
+}
+
 export function createGmailTransporter({ user, appPassword }) {
 	return nodemailer.createTransport({
 		service: "gmail",

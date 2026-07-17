@@ -13,10 +13,13 @@ import { createScheduleRoutes } from "./scheduleRoutes.js";
 
 const JWT_SECRET = "test-secret";
 
-function fakeArboxClient(classes, { cancelCalls } = {}) {
+function fakeArboxClient(classes, { cancelCalls, scheduleCalls } = {}) {
 	return {
 		login: async () => ({ token: "t", refreshToken: "r", fullName: "Alon" }),
-		getScheduleBetweenDates: async () => classes,
+		getScheduleBetweenDates: async (token, refreshToken, from, to) => {
+			scheduleCalls?.push({ from, to });
+			return classes;
+		},
 		getQuota: async () => ({ used: 4 }),
 		getMembership: async () => 999,
 		cancel: async (token, refreshToken, args) => {
@@ -34,14 +37,15 @@ function setup(classes) {
 	const user = usersRepo.create({ username: "alon", passwordHash: "h", isAdmin: false });
 	credentialsRepo.set(user.id, { email: "a@b.com", password: "gympw" });
 	const cancelCalls = [];
-	const arboxClient = fakeArboxClient(classes, { cancelCalls });
+	const scheduleCalls = [];
+	const arboxClient = fakeArboxClient(classes, { cancelCalls, scheduleCalls });
 	const app = express();
 	app.use(express.json());
 	app.use(cookieParser());
 	app.use(requireAuth({ jwtSecret: JWT_SECRET }));
 	app.use("/api/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 	const cookie = `session=${signSession({ id: user.id, isAdmin: false }, JWT_SECRET)}`;
-	return { app, cookie, user, jobsRepo, usersRepo, cancelCalls };
+	return { app, cookie, user, jobsRepo, usersRepo, cancelCalls, scheduleCalls };
 }
 
 test("GET /api/schedule annotates each class with fire_at and quota", async () => {
@@ -169,4 +173,12 @@ test("DELETE /api/schedule/:scheduleId also marks a matching local job cancelled
 	jobsRepo.updateStatus(job.id, "success", null);
 	await request(app).delete("/api/schedule/999444").set("Cookie", cookie);
 	assert.equal(jobsRepo.findByIdUnscoped(job.id).status, "cancelled");
+});
+
+test("GET /api/schedule honors a ?from= param for browsing other weeks (past or future)", async () => {
+	const { app, cookie, scheduleCalls } = setup([]);
+	await request(app).get("/api/schedule?days=7&from=2026-08-03").set("Cookie", cookie);
+	assert.equal(scheduleCalls.length, 1);
+	assert.equal(scheduleCalls[0].from, "2026-08-03T00:00:00.000Z");
+	assert.equal(scheduleCalls[0].to, "2026-08-10T00:00:00.000Z");
 });

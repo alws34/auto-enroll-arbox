@@ -9,7 +9,7 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, u
 		if (!creds) return res.status(400).json({ error: "Arbox credentials not configured" });
 
 		const days = Number(req.query.days || 7);
-		const from = new Date();
+		const from = req.query.from ? new Date(`${req.query.from}T00:00:00.000Z`) : new Date();
 		from.setUTCHours(0, 0, 0, 0);
 		const to = new Date(from);
 		to.setUTCDate(to.getUTCDate() + days);

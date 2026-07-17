@@ -90,7 +90,7 @@ authed.use(requireAuth({ jwtSecret: JWT_SECRET }));
 authed.use("/me/arbox-credentials", createCredentialsRoutes({ credentialsRepo }));
 authed.use("/me/webhook", createWebhookRoutes({ webhookRepo }));
 authed.use("/me/quota", createQuotaRoutes({ usersRepo }));
-authed.use("/me/notifications", createNotificationPrefsRoutes({ usersRepo }));
+authed.use("/me/notifications", createNotificationPrefsRoutes({ usersRepo, transporter, fromEmailProvider }));
 authed.use("/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 authed.use("/jobs", createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }));
 authed.use(

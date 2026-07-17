@@ -61,6 +61,15 @@ export function SettingsPage() {
 		}
 	}
 
+	async function sendTestEmail() {
+		try {
+			await api.sendTestEmail();
+			setStatus("Test email sent — check your inbox.");
+		} catch (err) {
+			setStatus(err.message);
+		}
+	}
+
 	return (
 		<div className="settings-page">
 			<h2>Gym credentials</h2>
@@ -94,9 +103,14 @@ export function SettingsPage() {
 					/>
 					Email me about my scheduled classes (enrolled, waitlisted, failed, missed)
 				</label>
-				<button className="btn btn-primary" type="submit">
-					Save
-				</button>
+				<div className="btn-row">
+					<button className="btn btn-primary" type="submit">
+						Save
+					</button>
+					<button className="btn btn-secondary" type="button" onClick={sendTestEmail}>
+						Send test email
+					</button>
+				</div>
 			</form>
 
 			<h2>Webhook</h2>
