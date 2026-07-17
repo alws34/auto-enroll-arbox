@@ -28,8 +28,16 @@ export const api = {
 	setWebhook: (webhookUrl) => request("/me/webhook", { method: "PUT", body: JSON.stringify({ webhookUrl }) }),
 	getQuota: () => request("/me/quota"),
 	setQuota: (maxClassesPerMonth) => request("/me/quota", { method: "PUT", body: JSON.stringify({ maxClassesPerMonth }) }),
+	getNotificationPrefs: () => request("/me/notifications"),
+	setNotificationPrefs: (email, emailNotificationsEnabled) =>
+		request("/me/notifications", { method: "PUT", body: JSON.stringify({ email, emailNotificationsEnabled }) }),
 	scheduleJob: (scheduleId, classDate) => request("/jobs", { method: "POST", body: JSON.stringify({ scheduleId, classDate }) }),
 	cancelJob: (id) => request(`/jobs/${id}`, { method: "DELETE" }),
 	listUsers: () => request("/admin/users"),
-	createUser: (username, password, isAdmin) => request("/admin/users", { method: "POST", body: JSON.stringify({ username, password, isAdmin }) }),
+	createUser: (username, password, email) =>
+		request("/admin/users", { method: "POST", body: JSON.stringify({ username, password, email }) }),
+	sendPasswordReset: (userId) => request(`/admin/users/${userId}/send-reset`, { method: "POST" }),
+	getSenderEmail: () => request("/admin/settings/sender-email"),
+	setSenderEmail: (senderEmail) => request("/admin/settings/sender-email", { method: "PUT", body: JSON.stringify({ senderEmail }) }),
+	resetPassword: (token, password) => request(`/password-reset/${token}`, { method: "POST", body: JSON.stringify({ password }) }),
 };

@@ -4,6 +4,7 @@ import { DayTabs } from "../components/DayTabs.jsx";
 import { ClassRow } from "../components/ClassRow.jsx";
 import { QuotaStrip } from "../components/QuotaStrip.jsx";
 import { StatusLegend } from "../components/StatusLegend.jsx";
+import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
 
 function dayLabel(dateStr) {
 	const d = new Date(`${dateStr}T00:00:00`);
@@ -68,6 +69,8 @@ export function SchedulePage() {
 		<div className="schedule-page">
 			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
+			<h3 className="section-heading">My schedule</h3>
+			<WeeklyCalendar days={days} classes={classes} onCancel={handleCancel} />
 			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
 			<div className="class-list">
 				{visibleClasses.map((c) => (

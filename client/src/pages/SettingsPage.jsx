@@ -6,12 +6,18 @@ export function SettingsPage() {
 	const [password, setPassword] = useState("");
 	const [webhookUrl, setWebhookUrl] = useState("");
 	const [maxClassesPerMonth, setMaxClassesPerMonth] = useState("");
+	const [notifyEmail, setNotifyEmail] = useState("");
+	const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 	const [status, setStatus] = useState(null);
 
 	useEffect(() => {
 		api.getCredentials().then((c) => setEmail(c.email || ""));
 		api.getWebhook().then((w) => setWebhookUrl(w.webhookUrl || ""));
 		api.getQuota().then((q) => setMaxClassesPerMonth(String(q.maxClassesPerMonth)));
+		api.getNotificationPrefs().then((n) => {
+			setNotifyEmail(n.email || "");
+			setEmailNotificationsEnabled(n.emailNotificationsEnabled);
+		});
 	}, []);
 
 	async function saveCredentials(e) {
@@ -45,6 +51,16 @@ export function SettingsPage() {
 		}
 	}
 
+	async function saveNotifications(e) {
+		e.preventDefault();
+		try {
+			await api.setNotificationPrefs(notifyEmail, emailNotificationsEnabled);
+			setStatus("Notification settings saved.");
+		} catch (err) {
+			setStatus(err.message);
+		}
+	}
+
 	return (
 		<div className="settings-page">
 			<h2>Gym credentials</h2>
@@ -57,6 +73,27 @@ export function SettingsPage() {
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 				/>
+				<button className="btn btn-primary" type="submit">
+					Save
+				</button>
+			</form>
+
+			<h2>Email notifications</h2>
+			<form onSubmit={saveNotifications}>
+				<input
+					className="mock-input"
+					placeholder="Where should we email you?"
+					value={notifyEmail}
+					onChange={(e) => setNotifyEmail(e.target.value)}
+				/>
+				<label className="checkbox-label">
+					<input
+						type="checkbox"
+						checked={emailNotificationsEnabled}
+						onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
+					/>
+					Email me about my scheduled classes (enrolled, waitlisted, failed, missed)
+				</label>
 				<button className="btn btn-primary" type="submit">
 					Save
 				</button>

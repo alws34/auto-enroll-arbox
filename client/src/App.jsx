@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { SchedulePage } from "./pages/SchedulePage.jsx";
 import { SettingsPage } from "./pages/SettingsPage.jsx";
 import { AdminUsersPage } from "./pages/AdminUsersPage.jsx";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage.jsx";
 
 function Nav({ onLogout }) {
 	return (
@@ -45,6 +46,7 @@ export function App() {
 		<BrowserRouter>
 			<Routes>
 				<Route path="/login" element={<LoginPage />} />
+				<Route path="/reset-password" element={<ResetPasswordPage />} />
 				<Route path="/*" element={<AppShell />} />
 			</Routes>
 		</BrowserRouter>
