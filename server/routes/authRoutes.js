@@ -15,7 +15,7 @@ export function createAuthRoutes({ usersRepo, jwtSecret }) {
 		res.cookie("session", token, {
 			httpOnly: true,
 			sameSite: "lax",
-			secure: process.env.NODE_ENV === "production",
+			secure: req.secure,
 			maxAge: 30 * 24 * 60 * 60 * 1000,
 		});
 		res.json({ id: user.id, username: user.username, isAdmin: !!user.is_admin });
