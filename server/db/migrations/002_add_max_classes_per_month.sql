@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN max_classes_per_month INTEGER NOT NULL DEFAULT 12;

@@ -1,7 +1,7 @@
 import express from "express";
 import { hashPassword } from "../crypto/password.js";
 
-export function createAdminRoutes({ usersRepo }) {
+export function createAdminRoutes({ usersRepo, defaultMaxClassesPerMonth }) {
 	const router = express.Router();
 
 	router.get("/", (req, res) => {
@@ -9,11 +9,16 @@ export function createAdminRoutes({ usersRepo }) {
 	});
 
 	router.post("/", async (req, res) => {
-		const { username, password, isAdmin } = req.body || {};
+		const { username, password, isAdmin, maxClassesPerMonth } = req.body || {};
 		if (!username || !password) return res.status(400).json({ error: "username and password are required" });
 		if (usersRepo.findByUsername(username)) return res.status(409).json({ error: "Username already exists" });
-		const user = usersRepo.create({ username, passwordHash: await hashPassword(password), isAdmin: !!isAdmin });
-		res.status(201).json({ id: user.id, username: user.username, isAdmin: !!user.is_admin });
+		const user = usersRepo.create({
+			username,
+			passwordHash: await hashPassword(password),
+			isAdmin: !!isAdmin,
+			maxClassesPerMonth: maxClassesPerMonth ? Number(maxClassesPerMonth) : defaultMaxClassesPerMonth,
+		});
+		res.status(201).json({ id: user.id, username: user.username, isAdmin: !!user.is_admin, maxClassesPerMonth: user.max_classes_per_month });
 	});
 
 	return router;

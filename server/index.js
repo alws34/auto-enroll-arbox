@@ -21,6 +21,7 @@ import { createWebhookRoutes } from "./routes/webhookRoutes.js";
 import { createScheduleRoutes } from "./routes/scheduleRoutes.js";
 import { createJobsRoutes } from "./routes/jobsRoutes.js";
 import { createAdminRoutes } from "./routes/adminRoutes.js";
+import { createQuotaRoutes } from "./routes/quotaRoutes.js";
 
 dotenv.config();
 
@@ -40,7 +41,12 @@ const credentialsRepo = createCredentialsRepo(db, ENCRYPTION_KEY);
 const webhookRepo = createWebhookRepo(db);
 const jobsRepo = createJobsRepo(db);
 
-await bootstrapAdmin({ usersRepo, username: process.env.ADMIN_USERNAME, password: process.env.ADMIN_PASSWORD });
+await bootstrapAdmin({
+	usersRepo,
+	username: process.env.ADMIN_USERNAME,
+	password: process.env.ADMIN_PASSWORD,
+	maxClassesPerMonth: MAX_CLASSES_PER_MONTH,
+});
 
 const arboxClient = createArboxClient();
 const notify = createNotifier({ webhookRepo });
@@ -60,9 +66,10 @@ const authed = express.Router();
 authed.use(requireAuth({ jwtSecret: JWT_SECRET }));
 authed.use("/me/arbox-credentials", createCredentialsRoutes({ credentialsRepo }));
 authed.use("/me/webhook", createWebhookRoutes({ webhookRepo }));
-authed.use("/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, maxClassesPerMonth: MAX_CLASSES_PER_MONTH }));
+authed.use("/me/quota", createQuotaRoutes({ usersRepo }));
+authed.use("/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 authed.use("/jobs", createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }));
-authed.use("/admin/users", requireAdmin, createAdminRoutes({ usersRepo }));
+authed.use("/admin/users", requireAdmin, createAdminRoutes({ usersRepo, defaultMaxClassesPerMonth: MAX_CLASSES_PER_MONTH }));
 app.use("/api", authed);
 
 const clientDist = path.join(__dirname, "..", "client", "dist");

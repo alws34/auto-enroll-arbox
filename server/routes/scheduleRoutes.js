@@ -1,7 +1,7 @@
 import express from "express";
 import { computeFireAt } from "../scheduling/fireAt.js";
 
-export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, maxClassesPerMonth }) {
+export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }) {
 	const router = express.Router();
 
 	router.get("/", async (req, res) => {
@@ -42,7 +42,8 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, m
 			};
 		});
 
-		res.json({ classes, quota: { used: quota.used, limit: maxClassesPerMonth } });
+		const user = usersRepo.findById(req.user.id);
+		res.json({ classes, quota: { used: quota.used, limit: user.max_classes_per_month } });
 	});
 
 	return router;

@@ -18,5 +18,14 @@ services:
       MAX_CLASSES_PER_MONTH: ${MAX_CLASSES_PER_MONTH:-12}
       NODE_ENV: production
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+
 volumes:
   app-data:

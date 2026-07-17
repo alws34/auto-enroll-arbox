@@ -1,58 +1,119 @@
 
 # Auto Enroll - Arbox app
 
-An automated registartion to classes without the Arbox app.
+A multi-user web app that auto-enrolls into Arbox gym classes at the exact
+moment registration opens — no more racing a browser tab at the exact second
+and losing the spot.
 
 #### Wait, what?
-No more alaram clocks to remember enrolling to classes.
 
-No more "The session is full" 🥺 or even worse "11 waitlist" 🤯
+Browse the upcoming schedule (day by day, mobile-friendly), press
+**Schedule** on a class, and the app logs in and hits enroll for you at the
+precise second registration opens for that class (Arbox exposes this window
+per class — 48 or 72 hours ahead, depending on the class). If the class is
+full, an accepted waitlist spot still counts as success.
 
-Just fill the schedule for the next week and it will register for you to your desired class at the specified time.
+Each person (you, your training partner) has their own login, their own
+Arbox credentials (stored encrypted), and their own schedule/jobs — fully
+isolated.
 
-#### Oh, wow that's awesome 🥳
+## Deploying
 
-## Where we start?
+This is a single Docker Compose stack: the app container (Node/Express API +
+built React frontend, SQLite for storage) plus an optional `cloudflared`
+sidecar for exposing it to the internet through a Cloudflare Tunnel.
 
-1. Clone repository OR download ZIP
-2. run ```npm install```
-3. Update the files:
+### 1. Configure environment
 
-    3.1. *"sample.env"*: change it's name to *".env"*, and insert the details
-        
-        ARBOX_USER_EMAIL="your arbox email here"
-        ARBOX_USER_PASSWORD="your arbox password here"
-        ALERTZY_ACCOUNT_KEY="Alertzy app key"
+```bash
+cp sample.env .env
+```
 
-+ Alertzy app is availble for free on IOS just download it from the App-Store and get the Account key and place it in the ".env" file. This part is optional, but it is recommended so you can get push notifications for every succesfull enrollment to a class.
+Fill in `.env`:
 
+| Variable | What it is |
+|---|---|
+| `JWT_SECRET` | Random secret for signing session cookies. Generate with `openssl rand -hex 32`. |
+| `ENCRYPTION_KEY` | Random secret used to encrypt stored Arbox passwords at rest. Generate with `openssl rand -hex 32`. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Your login for the first (admin) account — auto-created on first boot. |
+| `ARBOX_WHITELABEL` / `ARBOX_BOX_ID` / `ARBOX_LOCATIONS_BOX_ID` | Already set correctly for hypr-training / CrossFit White City — leave as-is unless you're pointing this at a different Arbox box. |
+| `MAX_CLASSES_PER_MONTH` | Default monthly quota assigned to new accounts (yours on bootstrap, and anyone the admin creates). Each user can change their own in Settings afterward — membership plans differ per person. |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Only needed if exposing via Cloudflare Tunnel — see below. |
 
-3.2. *"schedule.js.sample"*: change it's name to *"schedule.js"*, and update your schedule for the next week classes.
-    
-    Schedule variables:
+Note: each user's own Arbox email/password is entered later, in the app's
+Settings page — not in `.env`. `.env` only holds app-level config.
 
-+ __class_name__: Exact name of the class as it in the app
+### 2. Build and run
 
-+ __date__: date of the class (Year-Month-Day: yyyy-MM-dd), for example: May 7th, 2023 wil be written as "2023-05-07".
+```bash
+docker compose up -d --build
+```
 
-+ __start_time__: The exact starting time of the class (as it appears in the Arbox app)
-        
-        {
-            "class_name": "WOD",
-            "date": "2023-05-07",
-            "start_time": "08:30"
-        }
-4. run ```npm start```
-5. The app will now register every day to classes at the time which is specified in the *config.js* file.
+The app is now on `http://<server-ip>:5000`. Log in with
+`ADMIN_USERNAME`/`ADMIN_PASSWORD`, then use the Users page (admin only) to
+create an account for anyone else training with you.
 
+### 3. Expose it via Cloudflare Tunnel (optional, for access from outside your LAN)
 
+The `cloudflared` service in `docker-compose.yml` is already wired to read
+`CLOUDFLARE_TUNNEL_TOKEN` from `.env` and connect on boot — you just need to
+create the tunnel in the Cloudflare dashboard and grab its token. See
+**Cloudflare setup** below.
 
-## Config file
+## Cloudflare setup
 
-* Set *registerTime* - the exact time that the app will enroll to classes
-* Set *coach_priorities* in the config file you can add your preffered coaches in ascending order, this just in case that there will be a couple of classes at the same time so the app will choose the one with your preffered coach.
+### Create the tunnel
 
-## App behavior
+1. Go to the Cloudflare Zero Trust dashboard → **Networks → Tunnels**.
+2. **Create a tunnel** → connector type **Cloudflared** → name it (e.g.
+   `arbox-app`).
+3. On the install step, choose the **Docker** option — it shows a command
+   containing a long token after `--token`. Copy just that token value into
+   `.env` as `CLOUDFLARE_TUNNEL_TOKEN`. (You don't run that install command
+   yourself — `docker compose up` runs the `cloudflared` container for you,
+   already pointed at this token.)
+4. Still in the tunnel setup, add a **Public Hostname**:
+   - Subdomain: whatever you want (e.g. `arbox`)
+   - Domain: your domain in Cloudflare
+   - Service Type: `HTTP`
+   - URL: `app:5000` — the Docker Compose service name and port, since
+     `cloudflared` reaches `app` over the internal compose network, not the
+     host.
+5. Save. Once `docker compose up -d` is running with the token set, the
+   tunnel comes up automatically — no ports need to be forwarded on your
+   router.
 
-* __The app will create a list of jobs to do exactly 30 seconds before the specified registration time__, this behavior is applied to make sure that the app will register as soon as possible to classes withou the need to prepare things at the critical registartion time.
-* The app is using a cron job scheduler to enroll to classes at a specified time so make sure it is up (_at least 30 seconds_ before registartion time) while you are close the registartion time.
+### Restrict access to specific emails (Cloudflare Access)
+
+This puts an email-based login wall in front of the tunnel, on top of the
+app's own login.
+
+1. In Zero Trust dashboard → **Access → Applications → Add an application**
+   → **Self-hosted**.
+2. Application domain: the exact hostname you set up above (e.g.
+   `arbox.yourdomain.com`).
+3. Identity providers: the built-in **One-time PIN** (email code) provider
+   is enabled by default — no extra setup needed for email-based login.
+4. Add a policy:
+   - Action: **Allow**
+   - Include rule: **Emails** — list the exact email addresses allowed (you
+     + your training partner).
+5. Save.
+
+Now visiting the hostname prompts a Cloudflare-hosted login (enter email →
+get a one-time code) before the request ever reaches your server. Only the
+listed emails can get through. The app's own username/password login still
+sits behind that as a second layer.
+
+## How registration timing works
+
+Arbox tells the app, per class, how many hours in advance registration opens
+(`enable_registration_time` — 48 or 72 in practice for this gym). When you
+press **Schedule**, the app computes the exact open instant and arms a timer
+that fires at that second — with a short burst-retry window if the first
+attempt hits a transient error, and it keeps trying briefly even if the spot
+goes to a waitlist (that still counts as a win). If the server is down when
+a class's window opens, the job is marked **missed** on the next boot rather
+than attempting a late signup, and a webhook fires to tell you it happened.
+Configure that webhook URL (any endpoint that accepts a POST — Home
+Assistant, etc.) per-user in Settings.

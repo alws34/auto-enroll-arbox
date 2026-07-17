@@ -5,11 +5,13 @@ export function SettingsPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [webhookUrl, setWebhookUrl] = useState("");
+	const [maxClassesPerMonth, setMaxClassesPerMonth] = useState("");
 	const [status, setStatus] = useState(null);
 
 	useEffect(() => {
 		api.getCredentials().then((c) => setEmail(c.email || ""));
 		api.getWebhook().then((w) => setWebhookUrl(w.webhookUrl || ""));
+		api.getQuota().then((q) => setMaxClassesPerMonth(String(q.maxClassesPerMonth)));
 	}, []);
 
 	async function saveCredentials(e) {
@@ -28,6 +30,16 @@ export function SettingsPage() {
 		try {
 			await api.setWebhook(webhookUrl);
 			setStatus("Webhook saved.");
+		} catch (err) {
+			setStatus(err.message);
+		}
+	}
+
+	async function saveQuota(e) {
+		e.preventDefault();
+		try {
+			await api.setQuota(Number(maxClassesPerMonth));
+			setStatus("Monthly quota saved.");
 		} catch (err) {
 			setStatus(err.message);
 		}
@@ -57,6 +69,21 @@ export function SettingsPage() {
 					placeholder="https://your-webhook-url"
 					value={webhookUrl}
 					onChange={(e) => setWebhookUrl(e.target.value)}
+				/>
+				<button className="btn btn-primary" type="submit">
+					Save
+				</button>
+			</form>
+
+			<h2>Monthly quota</h2>
+			<form onSubmit={saveQuota}>
+				<input
+					className="mock-input"
+					type="number"
+					min="1"
+					placeholder="Sessions per month on your plan"
+					value={maxClassesPerMonth}
+					onChange={(e) => setMaxClassesPerMonth(e.target.value)}
 				/>
 				<button className="btn btn-primary" type="submit">
 					Save

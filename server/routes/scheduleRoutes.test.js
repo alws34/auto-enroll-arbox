@@ -33,9 +33,9 @@ function setup(classes) {
 	app.use(express.json());
 	app.use(cookieParser());
 	app.use(requireAuth({ jwtSecret: JWT_SECRET }));
-	app.use("/api/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, maxClassesPerMonth: 12 }));
+	app.use("/api/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 	const cookie = `session=${signSession({ id: user.id, isAdmin: false }, JWT_SECRET)}`;
-	return { app, cookie, user, jobsRepo };
+	return { app, cookie, user, jobsRepo, usersRepo };
 }
 
 test("GET /api/schedule annotates each class with fire_at and quota", async () => {
@@ -93,7 +93,7 @@ test("GET /api/schedule returns 400 when the user has no arbox credentials confi
 	app.use(requireAuth({ jwtSecret: JWT_SECRET }));
 	app.use(
 		"/api/schedule",
-		createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient: fakeArboxClient([]), maxClassesPerMonth: 12 })
+		createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient: fakeArboxClient([]), usersRepo })
 	);
 	const cookie = `session=${signSession({ id: user.id, isAdmin: false }, JWT_SECRET)}`;
 	const res = await request(app).get("/api/schedule").set("Cookie", cookie);
