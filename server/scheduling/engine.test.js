@@ -188,3 +188,77 @@ test("boot() re-arms pending jobs with a future fire_at, and marks past-due ones
 	assert.equal(jobsRepo.findByIdUnscoped(pastJob.id).status, "missed");
 	assert.ok(notified.some((n) => n.event === "missed"));
 });
+
+test("fireJob marks notified_at only when notify delivers, never fires the job twice", async () => {
+	const { user, jobsRepo, credentialsRepo } = setup();
+	let deliverResult = false;
+	const arboxClient = {
+		login: async () => ({ token: "t", refreshToken: "r" }),
+		getMembership: async () => 999,
+		enroll: async () => ({ status: 200, body: { data: { user_booked: 1 } } }),
+	};
+	const scheduler = createJobScheduler({
+		jobsRepo,
+		credentialsRepo,
+		arboxClient,
+		notify: async () => deliverResult,
+		retryIntervalMs: 10,
+		retryWindowMs: 50,
+	});
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 7,
+		classDate: "2026-07-20",
+		classTime: "06:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: new Date(Date.now() + 30).toISOString(),
+	});
+	scheduler.arm(job);
+	await sleep(300);
+	const afterFire = jobsRepo.findByIdUnscoped(job.id);
+	assert.equal(afterFire.status, "success");
+	assert.equal(afterFire.notified_at, null); // notify() returned false — not marked delivered
+
+	// boot's catch-up pass should retry it, and this time succeed
+	deliverResult = true;
+	scheduler.boot();
+	await sleep(50);
+	assert.ok(jobsRepo.findByIdUnscoped(job.id).notified_at);
+});
+
+test("boot() catch-up never re-notifies a job that's already marked notified", async () => {
+	const { user, jobsRepo, credentialsRepo } = setup();
+	const notifyCalls = [];
+	const arboxClient = {
+		login: async () => ({ token: "t", refreshToken: "r" }),
+		getMembership: async () => 999,
+		enroll: async () => ({ status: 200, body: { data: { user_booked: 1 } } }),
+	};
+	const scheduler = createJobScheduler({
+		jobsRepo,
+		credentialsRepo,
+		arboxClient,
+		notify: async (userId, event) => {
+			notifyCalls.push(event);
+			return true;
+		},
+	});
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 8,
+		classDate: "2026-07-20",
+		classTime: "06:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: new Date(Date.now() - 5000).toISOString(),
+	});
+	scheduler.boot();
+	await sleep(50);
+	assert.equal(notifyCalls.length, 1);
+	assert.ok(jobsRepo.findByIdUnscoped(job.id).notified_at);
+
+	scheduler.boot(); // second boot — job already notified, must not fire notify again
+	await sleep(50);
+	assert.equal(notifyCalls.length, 1);
+});

@@ -19,15 +19,37 @@ export function createJobScheduler({
 }) {
 	const timers = new Map(); // jobId -> { timeout }
 
-	function boot() {
+	async function deliverAndMark(job, status, detail) {
+		const delivered = await notify(job.user_id, status, {
+			classId: job.schedule_id,
+			className: job.class_name,
+			date: job.class_date,
+			time: job.class_time,
+			detail,
+		});
+		if (delivered) jobsRepo.markNotified(job.id);
+	}
+
+	async function boot() {
+		const missedDeliveries = [];
 		for (const job of jobsRepo.listPending()) {
 			const fireAt = new Date(job.fire_at).getTime();
 			if (fireAt <= Date.now()) {
-				jobsRepo.updateStatus(job.id, "missed", "Server was offline when registration opened");
-				notify(job.user_id, "missed", { classId: job.schedule_id, className: job.class_name, date: job.class_date, time: job.class_time });
+				const detail = "Server was offline when registration opened";
+				jobsRepo.updateStatus(job.id, "missed", detail);
+				missedDeliveries.push(deliverAndMark(job, "missed", detail));
 			} else {
 				arm(job);
 			}
+		}
+		// Await these before the catch-up scan below, so a just-marked-notified job
+		// can't still show up as unnotified and get double-delivered in the same boot().
+		await Promise.all(missedDeliveries);
+
+		// Catch up on any terminal job whose notification never confirmed delivery
+		// (e.g. a crash between updateStatus and notify) — never re-fires the job itself.
+		for (const job of jobsRepo.listUnnotifiedTerminal()) {
+			deliverAndMark(job, job.status, job.result_detail);
 		}
 	}
 
@@ -58,8 +80,9 @@ export function createJobScheduler({
 	async function fireJob(job) {
 		const creds = credentialsRepo.get(job.user_id);
 		if (!creds) {
-			jobsRepo.updateStatus(job.id, "failed", "Arbox credentials no longer configured");
-			await notify(job.user_id, "failed", { classId: job.schedule_id, className: job.class_name, date: job.class_date, time: job.class_time, detail: "Arbox credentials no longer configured" });
+			const detail = "Arbox credentials no longer configured";
+			jobsRepo.updateStatus(job.id, "failed", detail);
+			await deliverAndMark(job, "failed", detail);
 			return;
 		}
 
@@ -89,13 +112,7 @@ export function createJobScheduler({
 		const finalStatus = outcome === "success" || outcome === "waitlisted" ? outcome : "failed";
 		const finalDetail = outcome === "transient" ? `Exhausted retries: ${detail}` : detail;
 		jobsRepo.updateStatus(job.id, finalStatus, finalDetail);
-		await notify(job.user_id, finalStatus, {
-			classId: job.schedule_id,
-			className: job.class_name,
-			date: job.class_date,
-			time: job.class_time,
-			detail: finalDetail,
-		});
+		await deliverAndMark(job, finalStatus, finalDetail);
 	}
 
 	return { boot, arm, cancelTimer, fireJob };

@@ -41,5 +41,16 @@ export function createJobsRepo(db) {
 				`UPDATE scheduled_jobs SET status = ?, result_detail = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`
 			).run(status, resultDetail, id);
 		},
+		markNotified(id) {
+			db.prepare(`UPDATE scheduled_jobs SET notified_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`).run(id);
+		},
+		listUnnotifiedTerminal() {
+			return db
+				.prepare(
+					`SELECT * FROM scheduled_jobs
+					 WHERE status IN ('success', 'waitlisted', 'failed', 'missed') AND notified_at IS NULL`
+				)
+				.all();
+		},
 	};
 }
