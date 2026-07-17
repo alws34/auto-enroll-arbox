@@ -3,6 +3,7 @@ import { api } from "../api.js";
 import { DayTabs } from "../components/DayTabs.jsx";
 import { ClassRow } from "../components/ClassRow.jsx";
 import { QuotaStrip } from "../components/QuotaStrip.jsx";
+import { StatusLegend } from "../components/StatusLegend.jsx";
 
 function dayLabel(dateStr) {
 	const d = new Date(`${dateStr}T00:00:00`);
@@ -65,6 +66,7 @@ export function SchedulePage() {
 
 	return (
 		<div className="schedule-page">
+			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
 			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
 			<div className="class-list">

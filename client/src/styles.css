@@ -17,7 +17,16 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .class-row-time { font-weight: bold; }
 .class-row-meta { font-size: 12px; opacity: 0.7; }
 .class-row-status { font-size: 12px; color: #e0a000; margin-top: 4px; }
-.status-scheduled { color: #3ab04a; }
+.job-status-badge { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #111; }
+.job-status-pending { background: #e0a000; }
+.job-status-waitlisted { background: #f4d03f; }
+.job-status-success { background: #3ab04a; }
+.job-status-failed { background: #e05050; color: #fff; }
+.job-status-missed { background: #888; color: #fff; }
+.job-status-cancelled { background: #666; color: #fff; }
+.status-legend { position: fixed; top: 12px; right: 12px; z-index: 50; display: flex; flex-direction: column; gap: 4px; background: rgba(20, 20, 22, 0.9); border: 1px solid #333; border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+.status-legend-item { display: flex; align-items: center; gap: 6px; }
+.status-legend-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .page-status { text-align: center; opacity: 0.7; margin-top: 40px; }
 .page-error { color: #e05050; }
 .login-form { display: flex; flex-direction: column; gap: 8px; max-width: 320px; margin: 80px auto; padding: 0 16px; }

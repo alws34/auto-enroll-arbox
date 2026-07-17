@@ -20,9 +20,10 @@ export function ClassRow({ classInfo, onSchedule, onCancel }) {
 				<div className="class-row-meta">
 					{classInfo.coach || "—"} · {classInfo.bookedCount}/{classInfo.maxUsers} {full ? "(full)" : ""}
 				</div>
-				<div className={`class-row-status ${classInfo.alreadyScheduled ? "status-scheduled" : ""}`}>
-					{classInfo.alreadyScheduled ? `✓ ${classInfo.jobStatus}` : formatCountdown(classInfo.fireAt)}
-				</div>
+				<div className="class-row-status">{formatCountdown(classInfo.fireAt)}</div>
+				{classInfo.alreadyScheduled && (
+					<div className={`job-status-badge job-status-${classInfo.jobStatus}`}>{classInfo.jobStatus}</div>
+				)}
 			</div>
 			{classInfo.alreadyScheduled ? (
 				<button className="btn btn-secondary" onClick={() => onCancel(classInfo.jobId)}>
