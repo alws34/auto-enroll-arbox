@@ -39,6 +39,8 @@ Fill in `.env`:
 | `ARBOX_WHITELABEL` / `ARBOX_BOX_ID` / `ARBOX_LOCATIONS_BOX_ID` | Already set correctly for hypr-training / CrossFit White City — leave as-is unless you're pointing this at a different Arbox box. |
 | `MAX_CLASSES_PER_MONTH` | Default monthly quota assigned to new accounts (yours on bootstrap, and anyone the admin creates). Each user can change their own in Settings afterward — membership plans differ per person. |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Only needed if exposing via Cloudflare Tunnel — see below. |
+| `APP_BASE_URL` | The public URL people reach this app at (e.g. your Cloudflare Tunnel hostname). Only used to build the link inside password-reset emails. |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail account used to send notification/reset emails, via an [app password](https://myaccount.google.com/apppasswords) (not your normal Gmail password — that won't work with 2FA on). Leave both blank to run without email (webhook notifications still work). The *display* From address can be changed later by the admin in the Users page without touching either of these. |
 
 Note: each user's own Arbox email/password is entered later, in the app's
 Settings page — not in `.env`. `.env` only holds app-level config.
