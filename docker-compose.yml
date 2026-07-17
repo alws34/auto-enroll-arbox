@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - app-data:/app/data
+    environment:
+      PORT: "5000"
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ARBOX_WHITELABEL: ${ARBOX_WHITELABEL:-hypr-training}
+      ARBOX_BOX_ID: ${ARBOX_BOX_ID:-59}
+      ARBOX_LOCATIONS_BOX_ID: ${ARBOX_LOCATIONS_BOX_ID:-48}
+      MAX_CLASSES_PER_MONTH: ${MAX_CLASSES_PER_MONTH:-12}
+      NODE_ENV: production
+
+volumes:
+  app-data:
