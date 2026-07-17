@@ -4,9 +4,9 @@ const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export function createPasswordResetRepo(db) {
 	return {
-		create(userId) {
+		create(userId, ttlMs = TOKEN_TTL_MS) {
 			const token = crypto.randomBytes(32).toString("hex");
-			const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+			const expiresAt = new Date(Date.now() + ttlMs).toISOString();
 			db.prepare("INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)").run(
 				userId,
 				token,

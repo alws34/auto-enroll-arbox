@@ -1,6 +1,9 @@
 import express from "express";
+import crypto from "node:crypto";
 import { hashPassword } from "../crypto/password.js";
-import { sendPasswordResetEmail } from "../notifications/sendEmail.js";
+import { sendPasswordResetEmail, sendInviteEmail } from "../notifications/sendEmail.js";
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function createAdminRoutes({
 	usersRepo,
@@ -17,22 +20,33 @@ export function createAdminRoutes({
 	});
 
 	router.post("/", async (req, res) => {
-		const { username, password, isAdmin, maxClassesPerMonth, email } = req.body || {};
-		if (!username || !password) return res.status(400).json({ error: "username and password are required" });
+		const { username, isAdmin, maxClassesPerMonth, email } = req.body || {};
+		if (!username || !email) return res.status(400).json({ error: "username and email are required" });
+		if (!transporter) return res.status(503).json({ error: "Email is not configured on this server — can't send an invite" });
 		if (usersRepo.findByUsername(username)) return res.status(409).json({ error: "Username already exists" });
+
+		// No usable password until the invite is completed — placeholder is a random
+		// bcrypt hash that can never match anything a real login attempt would send.
+		const placeholderHash = await hashPassword(crypto.randomBytes(32).toString("hex"));
 		const user = usersRepo.create({
 			username,
-			passwordHash: await hashPassword(password),
+			passwordHash: placeholderHash,
 			isAdmin: !!isAdmin,
 			maxClassesPerMonth: maxClassesPerMonth ? Number(maxClassesPerMonth) : defaultMaxClassesPerMonth,
-			email: email || null,
+			email,
 		});
+
+		const { token } = passwordResetRepo.create(user.id, INVITE_TTL_MS);
+		const inviteLink = `${appBaseUrl}/reset-password?token=${token}`;
+		await sendInviteEmail({ transporter, fromAddress: fromEmailProvider(), toEmail: email, inviteLink });
+
 		res.status(201).json({
 			id: user.id,
 			username: user.username,
 			isAdmin: !!user.is_admin,
 			maxClassesPerMonth: user.max_classes_per_month,
 			email: user.email,
+			invited: true,
 		});
 	});
 

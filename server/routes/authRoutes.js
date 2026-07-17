@@ -8,7 +8,7 @@ export function createAuthRoutes({ usersRepo, jwtSecret }) {
 	router.post("/login", async (req, res) => {
 		const { username, password } = req.body || {};
 		const user = usersRepo.findByUsername(username);
-		if (!user || !(await verifyPassword(password, user.password_hash))) {
+		if (!user || !user.password_hash || !(await verifyPassword(password, user.password_hash))) {
 			return res.status(401).json({ error: "Invalid username or password" });
 		}
 		const token = signSession({ id: user.id, isAdmin: user.is_admin }, jwtSecret);

@@ -55,19 +55,55 @@ test("GET /api/admin/users lists accounts without password hashes", async () => 
 	assert.equal(res.body[0].password_hash, undefined);
 });
 
-test("POST /api/admin/users creates a new account", async () => {
-	const { app, cookie, usersRepo } = setup();
-	const res = await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", password: "friendpw" });
+test("POST /api/admin/users creates an invited account and emails the invite link", async () => {
+	const { app, cookie, usersRepo, sentEmails } = setup();
+	const res = await request(app)
+		.post("/api/admin/users")
+		.set("Cookie", cookie)
+		.send({ username: "friend", email: "friend@example.com" });
 	assert.equal(res.status, 201);
 	assert.equal(res.body.username, "friend");
-	assert.ok(usersRepo.findByUsername("friend"));
+	assert.equal(res.body.invited, true);
+	assert.equal(res.body.email, "friend@example.com");
+	const created = usersRepo.findByUsername("friend");
+	assert.ok(created);
+	// no usable password yet — the login guard must reject a null/undefined attempt against it
+	assert.ok(created.password_hash);
+
+	assert.equal(sentEmails.length, 1);
+	assert.equal(sentEmails[0].to, "friend@example.com");
+	assert.match(sentEmails[0].text, /https:\/\/app\.example\.com\/reset-password\?token=/);
 });
 
 test("POST /api/admin/users rejects a duplicate username", async () => {
 	const { app, cookie } = setup();
-	await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", password: "pw1" });
-	const res = await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", password: "pw2" });
+	await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", email: "a@x.com" });
+	const res = await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", email: "b@x.com" });
 	assert.equal(res.status, 409);
+});
+
+test("POST /api/admin/users requires an email (invite has nowhere to go without one)", async () => {
+	const { app, cookie } = setup();
+	const res = await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend" });
+	assert.equal(res.status, 400);
+});
+
+test("POST /api/admin/users 503s when the server has no email transporter configured", async () => {
+	const db = createDb(":memory:");
+	const usersRepo = createUsersRepo(db);
+	const passwordResetRepo = createPasswordResetRepo(db);
+	const admin = usersRepo.create({ username: "admin", passwordHash: "h", isAdmin: true });
+	const app = express();
+	app.use(express.json());
+	app.use(cookieParser());
+	app.use(requireAuth({ jwtSecret: JWT_SECRET }), requireAdmin);
+	app.use(
+		"/api/admin/users",
+		createAdminRoutes({ usersRepo, passwordResetRepo, transporter: null, fromEmailProvider: () => "s@x.com", appBaseUrl: "https://x" })
+	);
+	const cookie = `session=${signSession({ id: admin.id, isAdmin: true }, JWT_SECRET)}`;
+	const res = await request(app).post("/api/admin/users").set("Cookie", cookie).send({ username: "friend", email: "a@x.com" });
+	assert.equal(res.status, 503);
 });
 
 test("POST /:id/send-reset emails a reset link when the target user has an email", async () => {

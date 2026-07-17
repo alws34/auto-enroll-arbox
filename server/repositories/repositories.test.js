@@ -177,6 +177,16 @@ test("passwordResetRepo: create/findValidByToken/markUsed", () => {
 	assert.equal(passwordResetRepo.findValidByToken(token), undefined);
 });
 
+test("passwordResetRepo: create accepts a custom ttlMs (for longer-lived invite links)", () => {
+	const { usersRepo, passwordResetRepo } = setup();
+	const user = usersRepo.create({ username: "alon", passwordHash: "h", isAdmin: false });
+	const oneHour = passwordResetRepo.create(user.id);
+	const sevenDays = passwordResetRepo.create(user.id, 7 * 24 * 60 * 60 * 1000);
+	const oneHourMs = new Date(oneHour.expiresAt) - Date.now();
+	const sevenDaysMs = new Date(sevenDays.expiresAt) - Date.now();
+	assert.ok(sevenDaysMs > oneHourMs * 100);
+});
+
 test("appSettingsRepo: get/set with fallback", () => {
 	const { appSettingsRepo } = setup();
 	assert.equal(appSettingsRepo.get("sender_email", "default@x.com"), "default@x.com");

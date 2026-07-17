@@ -4,7 +4,6 @@ import { api } from "../api.js";
 export function AdminUsersPage() {
 	const [users, setUsers] = useState([]);
 	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
 	const [email, setEmail] = useState("");
 	const [senderEmail, setSenderEmail] = useState("");
 	const [error, setError] = useState(null);
@@ -19,13 +18,14 @@ export function AdminUsersPage() {
 		api.getSenderEmail().then((s) => setSenderEmail(s.senderEmail || ""));
 	}, []);
 
-	async function handleCreate(e) {
+	async function handleInvite(e) {
 		e.preventDefault();
 		setError(null);
+		setStatus(null);
 		try {
-			await api.createUser(username, password, email || undefined);
+			await api.createUser(username, email);
+			setStatus(`Invite sent to ${email}.`);
 			setUsername("");
-			setPassword("");
 			setEmail("");
 			load();
 		} catch (err) {
@@ -84,24 +84,22 @@ export function AdminUsersPage() {
 				))}
 			</ul>
 
-			<h3>Add user</h3>
-			<form onSubmit={handleCreate}>
+			<h3>Invite user</h3>
+			<p className="modal-note">
+				They'll get an email with a link to set their own password. Notifications go to this email until they change it in
+				Settings.
+			</p>
+			<form onSubmit={handleInvite}>
 				<input className="mock-input" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
 				<input
 					className="mock-input"
-					type="password"
-					placeholder="Temporary password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-				/>
-				<input
-					className="mock-input"
-					placeholder="Notification email (optional)"
+					type="email"
+					placeholder="Email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
 				<button className="btn btn-primary" type="submit">
-					Create
+					Send invite
 				</button>
 			</form>
 			{status && <p className="page-status">{status}</p>}

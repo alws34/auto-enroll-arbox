@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEmailNotifier, sendPasswordResetEmail } from "./sendEmail.js";
+import { createEmailNotifier, sendPasswordResetEmail, sendInviteEmail } from "./sendEmail.js";
 
 function fakeTransporter(calls, shouldThrow = false) {
 	return {
@@ -80,4 +80,18 @@ test("sendPasswordResetEmail sends a link to the target address", async () => {
 	assert.equal(calls.length, 1);
 	assert.equal(calls[0].to, "friend@example.com");
 	assert.match(calls[0].text, /abc123/);
+});
+
+test("sendInviteEmail sends the invite link to the target address", async () => {
+	const calls = [];
+	await sendInviteEmail({
+		transporter: fakeTransporter(calls),
+		fromAddress: "sender@example.com",
+		toEmail: "friend@example.com",
+		inviteLink: "https://app.example.com/reset-password?token=xyz789",
+	});
+	assert.equal(calls.length, 1);
+	assert.equal(calls[0].to, "friend@example.com");
+	assert.match(calls[0].text, /xyz789/);
+	assert.match(calls[0].text, /invited/i);
 });

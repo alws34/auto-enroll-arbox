@@ -55,6 +55,15 @@ export async function sendPasswordResetEmail({ transporter, fromAddress, toEmail
 	});
 }
 
+export async function sendInviteEmail({ transporter, fromAddress, toEmail, inviteLink }) {
+	await transporter.sendMail({
+		from: fromAddress,
+		to: toEmail,
+		subject: "You've been invited",
+		text: `You've been invited to the Arbox auto-enroll app. Set your password to finish signing up (link valid for 7 days): ${inviteLink}`,
+	});
+}
+
 export async function sendTestEmail({ transporter, fromAddress, toEmail }) {
 	await transporter.sendMail({
 		from: fromAddress,

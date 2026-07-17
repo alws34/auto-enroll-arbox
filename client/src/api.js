@@ -36,8 +36,7 @@ export const api = {
 	cancelJob: (id) => request(`/jobs/${id}`, { method: "DELETE" }),
 	cancelArboxRegistration: (scheduleId) => request(`/schedule/${scheduleId}`, { method: "DELETE" }),
 	listUsers: () => request("/admin/users"),
-	createUser: (username, password, email) =>
-		request("/admin/users", { method: "POST", body: JSON.stringify({ username, password, email }) }),
+	createUser: (username, email) => request("/admin/users", { method: "POST", body: JSON.stringify({ username, email }) }),
 	sendPasswordReset: (userId) => request(`/admin/users/${userId}/send-reset`, { method: "POST" }),
 	getSenderEmail: () => request("/admin/settings/sender-email"),
 	setSenderEmail: (senderEmail) => request("/admin/settings/sender-email", { method: "PUT", body: JSON.stringify({ senderEmail }) }),
