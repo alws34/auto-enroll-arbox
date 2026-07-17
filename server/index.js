@@ -11,10 +11,12 @@ import { createWebhookRepo } from "./repositories/webhookRepo.js";
 import { createJobsRepo } from "./repositories/jobsRepo.js";
 import { createPasswordResetRepo } from "./repositories/passwordResetRepo.js";
 import { createAppSettingsRepo } from "./repositories/appSettingsRepo.js";
+import { createRemindersRepo } from "./repositories/remindersRepo.js";
 import { bootstrapAdmin } from "./auth/bootstrapAdmin.js";
 import { requireAuth, requireAdmin } from "./auth/middleware.js";
 import { createArboxClient } from "./arbox/client.js";
 import { createJobScheduler } from "./scheduling/engine.js";
+import { createReminderEngine } from "./scheduling/reminderEngine.js";
 import { createNotifier as createWebhookNotifier } from "./notifications/sendWebhook.js";
 import { createEmailNotifier, createGmailTransporter } from "./notifications/sendEmail.js";
 import { createCombinedNotifier } from "./notifications/notify.js";
@@ -29,6 +31,7 @@ import { createAdminSettingsRoutes, SENDER_EMAIL_KEY } from "./routes/adminSetti
 import { createQuotaRoutes } from "./routes/quotaRoutes.js";
 import { createNotificationPrefsRoutes } from "./routes/notificationPrefsRoutes.js";
 import { createPasswordResetRoutes } from "./routes/passwordResetRoutes.js";
+import { createRemindersRoutes } from "./routes/remindersRoutes.js";
 
 dotenv.config();
 
@@ -52,6 +55,7 @@ const webhookRepo = createWebhookRepo(db);
 const jobsRepo = createJobsRepo(db);
 const passwordResetRepo = createPasswordResetRepo(db);
 const appSettingsRepo = createAppSettingsRepo(db);
+const remindersRepo = createRemindersRepo(db);
 
 await bootstrapAdmin({
 	usersRepo,
@@ -75,6 +79,9 @@ const notify = createCombinedNotifier([webhookNotifier, emailNotifier]);
 const scheduler = createJobScheduler({ jobsRepo, credentialsRepo, arboxClient, notify });
 await scheduler.boot();
 
+const reminderEngine = createReminderEngine({ remindersRepo, notify });
+reminderEngine.start();
+
 const app = express();
 app.set("trust proxy", true);
 app.use(express.json());
@@ -93,6 +100,7 @@ authed.use("/me/quota", createQuotaRoutes({ usersRepo }));
 authed.use("/me/notifications", createNotificationPrefsRoutes({ usersRepo, transporter, fromEmailProvider }));
 authed.use("/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 authed.use("/jobs", createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }));
+authed.use("/reminders", createRemindersRoutes({ remindersRepo }));
 authed.use(
 	"/admin/users",
 	requireAdmin,

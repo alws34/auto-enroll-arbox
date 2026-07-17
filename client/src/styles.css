@@ -55,3 +55,6 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; }
 .week-nav .section-heading { margin: 0; text-align: center; flex: 1; font-size: 12px; }
 .week-nav .btn { padding: 4px 12px; font-size: 16px; line-height: 1; }
+.reminder-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.reminder-row .mock-input { margin-bottom: 0; flex: 1; }
+.reminder-remove { background: none; border: none; color: #e05050; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }

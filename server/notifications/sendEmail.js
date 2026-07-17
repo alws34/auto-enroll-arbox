@@ -5,10 +5,11 @@ const SUBJECTS = {
 	waitlisted: "Waitlisted",
 	failed: "Enrollment failed",
 	missed: "Signup missed",
+	reminder: "Class reminder",
 };
 
 function formatBody(event, payload) {
-	const { className, date, time, detail } = payload;
+	const { className, date, time, detail, minutesBefore } = payload;
 	const base = `${className} on ${date} at ${time}`;
 	switch (event) {
 		case "success":
@@ -19,6 +20,8 @@ function formatBody(event, payload) {
 			return `Enrollment failed: ${base}.${detail ? ` Reason: ${detail}` : ""}`;
 		case "missed":
 			return `Missed the registration window: ${base}.${detail ? ` ${detail}` : ""}`;
+		case "reminder":
+			return `Reminder: ${base} — starting in ${minutesBefore} minutes.`;
 		default:
 			return `${event}: ${base}.${detail ? ` ${detail}` : ""}`;
 	}

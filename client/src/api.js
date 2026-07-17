@@ -42,4 +42,17 @@ export const api = {
 	getSenderEmail: () => request("/admin/settings/sender-email"),
 	setSenderEmail: (senderEmail) => request("/admin/settings/sender-email", { method: "PUT", body: JSON.stringify({ senderEmail }) }),
 	resetPassword: (token, password) => request(`/password-reset/${token}`, { method: "POST", body: JSON.stringify({ password }) }),
+	listReminders: (scheduleId) => request(`/reminders?scheduleId=${scheduleId}`),
+	addReminder: (classInfo, minutesBefore) =>
+		request("/reminders", {
+			method: "POST",
+			body: JSON.stringify({
+				scheduleId: classInfo.id,
+				classDate: classInfo.date,
+				classTime: classInfo.time,
+				className: classInfo.name,
+				minutesBefore,
+			}),
+		}),
+	deleteReminder: (id) => request(`/reminders/${id}`, { method: "DELETE" }),
 };
