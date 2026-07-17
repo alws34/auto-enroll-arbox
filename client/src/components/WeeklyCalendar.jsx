@@ -3,7 +3,7 @@ function dayHeaderLabel(dateStr) {
 	return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
 }
 
-export function WeeklyCalendar({ days, classes, onCancel }) {
+export function WeeklyCalendar({ days, classes, onSelect }) {
 	const myClasses = classes.filter((c) => c.alreadyScheduled);
 
 	return (
@@ -15,14 +15,14 @@ export function WeeklyCalendar({ days, classes, onCancel }) {
 						<div className="weekly-calendar-day" key={d.date}>
 							<div className="weekly-calendar-day-label">{dayHeaderLabel(d.date)}</div>
 							{dayClasses.map((c) => (
-								<div className={`weekly-calendar-item job-status-${c.jobStatus}`} key={c.id}>
-									<button className="weekly-calendar-item-cancel" onClick={() => onCancel(c.jobId)} title="Cancel">
-										×
-									</button>
-									<div className="weekly-calendar-item-time">{c.time}</div>
+								<button className={`weekly-calendar-item job-status-${c.jobStatus}`} key={c.id} onClick={() => onSelect(c)}>
+									<div className="weekly-calendar-item-time">
+										{c.time}–{c.endTime}
+									</div>
 									<div className="weekly-calendar-item-name">{c.name}</div>
-								</div>
+								</button>
 							))}
+							{dayClasses.length === 0 && <div className="weekly-calendar-empty">—</div>}
 						</div>
 					);
 				})}

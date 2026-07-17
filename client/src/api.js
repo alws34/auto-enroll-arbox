@@ -33,6 +33,7 @@ export const api = {
 		request("/me/notifications", { method: "PUT", body: JSON.stringify({ email, emailNotificationsEnabled }) }),
 	scheduleJob: (scheduleId, classDate) => request("/jobs", { method: "POST", body: JSON.stringify({ scheduleId, classDate }) }),
 	cancelJob: (id) => request(`/jobs/${id}`, { method: "DELETE" }),
+	cancelArboxRegistration: (scheduleId) => request(`/schedule/${scheduleId}`, { method: "DELETE" }),
 	listUsers: () => request("/admin/users"),
 	createUser: (username, password, email) =>
 		request("/admin/users", { method: "POST", body: JSON.stringify({ username, password, email }) }),

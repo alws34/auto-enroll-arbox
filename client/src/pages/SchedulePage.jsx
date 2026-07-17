@@ -5,6 +5,7 @@ import { ClassRow } from "../components/ClassRow.jsx";
 import { QuotaStrip } from "../components/QuotaStrip.jsx";
 import { StatusLegend } from "../components/StatusLegend.jsx";
 import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
+import { ClassDetailModal } from "../components/ClassDetailModal.jsx";
 
 function dayLabel(dateStr) {
 	const d = new Date(`${dateStr}T00:00:00`);
@@ -17,6 +18,7 @@ export function SchedulePage() {
 	const [selectedDate, setSelectedDate] = useState(null);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [modalClass, setModalClass] = useState(null);
 
 	async function load() {
 		setLoading(true);
@@ -53,9 +55,12 @@ export function SchedulePage() {
 		}
 	}
 
-	async function handleCancel(jobId) {
+	// Arbox is the source of truth for booking state — a class registered from the
+	// official app has no local job row, so cancelling it can't go through /jobs/:id.
+	async function handleCancel(classInfo) {
 		try {
-			await api.cancelJob(jobId);
+			if (classInfo.jobId) await api.cancelJob(classInfo.jobId);
+			else await api.cancelArboxRegistration(classInfo.id);
 			await load();
 		} catch (err) {
 			setError(err.message);
@@ -70,14 +75,17 @@ export function SchedulePage() {
 			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
 			<h3 className="section-heading">My schedule</h3>
-			<WeeklyCalendar days={days} classes={classes} onCancel={handleCancel} />
+			<WeeklyCalendar days={days} classes={classes} onSelect={setModalClass} />
 			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
 			<div className="class-list">
 				{visibleClasses.map((c) => (
-					<ClassRow key={c.id} classInfo={c} onSchedule={handleSchedule} onCancel={handleCancel} />
+					<ClassRow key={c.id} classInfo={c} onSchedule={handleSchedule} onCancel={() => handleCancel(c)} />
 				))}
 				{visibleClasses.length === 0 && <p className="page-status">No classes this day.</p>}
 			</div>
+			{modalClass && (
+				<ClassDetailModal classInfo={modalClass} onClose={() => setModalClass(null)} onCancel={handleCancel} />
+			)}
 		</div>
 	);
 }

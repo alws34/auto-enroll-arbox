@@ -24,6 +24,11 @@ export function createJobsRepo(db) {
 		listPending() {
 			return db.prepare("SELECT * FROM scheduled_jobs WHERE status = 'pending'").all();
 		},
+		findByUserAndScheduleId(userId, scheduleId) {
+			return db
+				.prepare("SELECT * FROM scheduled_jobs WHERE user_id = ? AND schedule_id = ? ORDER BY id DESC LIMIT 1")
+				.get(userId, scheduleId);
+		},
 		findActiveByUserAndScheduleIds(userId, scheduleIds) {
 			if (scheduleIds.length === 0) return new Map();
 			const placeholders = scheduleIds.map(() => "?").join(",");

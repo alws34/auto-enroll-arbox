@@ -26,7 +26,7 @@ export function ClassRow({ classInfo, onSchedule, onCancel }) {
 				)}
 			</div>
 			{classInfo.alreadyScheduled ? (
-				<button className="btn btn-secondary" onClick={() => onCancel(classInfo.jobId)}>
+				<button className="btn btn-secondary" onClick={onCancel}>
 					Cancel
 				</button>
 			) : (

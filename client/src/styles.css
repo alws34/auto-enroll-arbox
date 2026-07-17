@@ -33,12 +33,20 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; }
 .section-heading { font-size: 14px; margin: 4px 0 8px; opacity: 0.85; }
 .weekly-calendar-wrap { overflow-x: auto; margin-bottom: 18px; }
-.weekly-calendar { display: grid; grid-template-columns: repeat(7, minmax(72px, 1fr)); gap: 6px; min-width: 560px; }
-.weekly-calendar-day { border: 1px solid #2a2a2e; border-radius: 8px; padding: 6px; min-height: 64px; }
-.weekly-calendar-day-label { font-size: 10px; opacity: 0.7; margin-bottom: 4px; }
-.weekly-calendar-item { position: relative; border-radius: 6px; padding: 4px 16px 4px 6px; font-size: 10px; color: #111; margin-bottom: 4px; }
-.weekly-calendar-item-time { font-weight: 700; }
-.weekly-calendar-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.weekly-calendar-item-cancel { position: absolute; top: 1px; right: 2px; border: none; background: none; color: #111; font-size: 12px; line-height: 1; cursor: pointer; padding: 2px; }
+.weekly-calendar { display: grid; grid-template-columns: repeat(7, minmax(130px, 1fr)); gap: 8px; min-width: 920px; }
+.weekly-calendar-day { border: 1px solid #2a2a2e; border-radius: 10px; padding: 8px; min-height: 140px; }
+.weekly-calendar-day-label { font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
+.weekly-calendar-item { display: block; width: 100%; text-align: left; border: none; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #111; margin-bottom: 6px; cursor: pointer; }
+.weekly-calendar-item-time { font-weight: 700; font-size: 13px; }
+.weekly-calendar-item-name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weekly-calendar-empty { font-size: 12px; opacity: 0.3; text-align: center; padding-top: 20px; }
 .admin-user-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .admin-user-list li { display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2e; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.btn-danger { background: #e05050; color: #fff; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+.modal-card { position: relative; background: #1a1a1d; border: 1px solid #333; border-radius: 12px; padding: 20px; max-width: 400px; width: 100%; }
+.modal-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: #eee; font-size: 20px; cursor: pointer; }
+.modal-meta { font-size: 13px; opacity: 0.8; margin: 4px 0; }
+.modal-note { font-size: 12px; opacity: 0.7; }
+.modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.modal-actions .btn { text-align: center; text-decoration: none; }

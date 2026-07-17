@@ -104,6 +104,25 @@ test("jobsRepo: findActiveByUserAndScheduleIds returns a map for already-schedul
 	assert.equal(map.has(999), false);
 });
 
+test("jobsRepo: findByUserAndScheduleId finds the most recent job regardless of status, or undefined", () => {
+	const { usersRepo, jobsRepo } = setup();
+	const user = usersRepo.create({ username: "alon", passwordHash: "h", isAdmin: false });
+	assert.equal(jobsRepo.findByUserAndScheduleId(user.id, 777), undefined);
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 777,
+		classDate: "2026-07-20",
+		classTime: "06:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: "2026-07-17T03:00:00.000Z",
+	});
+	jobsRepo.updateStatus(job.id, "cancelled", null);
+	const found = jobsRepo.findByUserAndScheduleId(user.id, 777);
+	assert.equal(found.id, job.id);
+	assert.equal(found.status, "cancelled");
+});
+
 test("jobsRepo: markNotified/listUnnotifiedTerminal — pending/cancelled never appear, terminal ones do until marked", () => {
 	const { usersRepo, jobsRepo } = setup();
 	const user = usersRepo.create({ username: "alon", passwordHash: "h", isAdmin: false });
