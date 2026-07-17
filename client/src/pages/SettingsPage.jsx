@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { TwoFactorSettings } from "../components/TwoFactorSettings.jsx";
 
 export function SettingsPage() {
 	const [email, setEmail] = useState("");
@@ -142,6 +143,9 @@ export function SettingsPage() {
 			</form>
 
 			{status && <p className="page-status">{status}</p>}
+
+			<h2>Security</h2>
+			<TwoFactorSettings />
 		</div>
 	);
 }

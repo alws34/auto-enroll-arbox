@@ -20,7 +20,13 @@ async function request(path, options = {}) {
 
 export const api = {
 	login: (username, password) => request("/login", { method: "POST", body: JSON.stringify({ username, password }) }),
+	loginTwoFactor: (pendingToken, code) =>
+		request("/login/2fa", { method: "POST", body: JSON.stringify({ pendingToken, code }) }),
 	logout: () => request("/logout", { method: "POST" }),
+	get2FA: () => request("/me/2fa"),
+	setup2FA: () => request("/me/2fa/setup", { method: "POST" }),
+	confirm2FA: (code) => request("/me/2fa/confirm", { method: "POST", body: JSON.stringify({ code }) }),
+	disable2FA: (code) => request("/me/2fa/disable", { method: "POST", body: JSON.stringify({ code }) }),
 	getSchedule: (days = 7, from) => request(`/schedule?days=${days}${from ? `&from=${from}` : ""}`),
 	getCredentials: () => request("/me/arbox-credentials"),
 	setCredentials: (email, password) => request("/me/arbox-credentials", { method: "PUT", body: JSON.stringify({ email, password }) }),

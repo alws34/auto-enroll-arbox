@@ -12,6 +12,7 @@ import { createJobsRepo } from "./repositories/jobsRepo.js";
 import { createPasswordResetRepo } from "./repositories/passwordResetRepo.js";
 import { createAppSettingsRepo } from "./repositories/appSettingsRepo.js";
 import { createRemindersRepo } from "./repositories/remindersRepo.js";
+import { createTotpRepo } from "./repositories/totpRepo.js";
 import { bootstrapAdmin } from "./auth/bootstrapAdmin.js";
 import { requireAuth, requireAdmin } from "./auth/middleware.js";
 import { createArboxClient } from "./arbox/client.js";
@@ -32,6 +33,7 @@ import { createQuotaRoutes } from "./routes/quotaRoutes.js";
 import { createNotificationPrefsRoutes } from "./routes/notificationPrefsRoutes.js";
 import { createPasswordResetRoutes } from "./routes/passwordResetRoutes.js";
 import { createRemindersRoutes } from "./routes/remindersRoutes.js";
+import { createTwoFactorRoutes } from "./routes/twoFactorRoutes.js";
 
 dotenv.config();
 
@@ -56,6 +58,7 @@ const jobsRepo = createJobsRepo(db);
 const passwordResetRepo = createPasswordResetRepo(db);
 const appSettingsRepo = createAppSettingsRepo(db);
 const remindersRepo = createRemindersRepo(db);
+const totpRepo = createTotpRepo(db, ENCRYPTION_KEY);
 
 await bootstrapAdmin({
 	usersRepo,
@@ -89,7 +92,7 @@ app.use(cookieParser());
 
 app.get("/api/health", (req, res) => res.json({ status: "OK", uptime: process.uptime() }));
 
-app.use("/api", createAuthRoutes({ usersRepo, jwtSecret: JWT_SECRET }));
+app.use("/api", createAuthRoutes({ usersRepo, jwtSecret: JWT_SECRET, totpRepo }));
 app.use("/api/password-reset", createPasswordResetRoutes({ passwordResetRepo, usersRepo }));
 
 const authed = express.Router();
@@ -101,6 +104,7 @@ authed.use("/me/notifications", createNotificationPrefsRoutes({ usersRepo, trans
 authed.use("/schedule", createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }));
 authed.use("/jobs", createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }));
 authed.use("/reminders", createRemindersRoutes({ remindersRepo }));
+authed.use("/me/2fa", createTwoFactorRoutes({ usersRepo, totpRepo }));
 authed.use(
 	"/admin/users",
 	requireAdmin,
