@@ -3,11 +3,11 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "5200:5000"
+      - "${PORT:-5000}:${PORT:-5000}"
     volumes:
       - app-data:/app/data
     environment:
-      PORT: "5200"
+      PORT: ${PORT:-5000}
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
