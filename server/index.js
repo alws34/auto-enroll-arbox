@@ -37,6 +37,13 @@ import { createTwoFactorRoutes } from "./routes/twoFactorRoutes.js";
 
 dotenv.config();
 
+process.on("unhandledRejection", (reason) => {
+	console.error("Unhandled promise rejection:", reason);
+});
+process.on("uncaughtException", (err) => {
+	console.error("Uncaught exception:", err);
+});
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -90,6 +97,15 @@ app.set("trust proxy", true);
 app.use(express.json());
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+	if (!req.path.startsWith("/api")) return next();
+	const start = Date.now();
+	res.on("finish", () => {
+		console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`);
+	});
+	next();
+});
+
 app.get("/api/health", (req, res) => res.json({ status: "OK", uptime: process.uptime() }));
 
 app.use("/api", createAuthRoutes({ usersRepo, jwtSecret: JWT_SECRET, totpRepo }));
@@ -127,5 +143,13 @@ app.use("/api", authed);
 const clientDist = path.join(__dirname, "..", "client", "dist");
 app.use(express.static(clientDist));
 app.get("*", (req, res) => res.sendFile(path.join(clientDist, "index.html")));
+
+// Must be registered last — catches errors forwarded via next(err) from asyncHandler-wrapped
+// routes, which would otherwise hang the request with no response and no log line at all.
+app.use((err, req, res, next) => {
+	console.error(`${req.method} ${req.originalUrl} ERROR:`, err);
+	if (res.headersSent) return next(err);
+	res.status(500).json({ error: "Internal server error" });
+});
 
 app.listen(PORT, () => console.log(`Server listening on :${PORT}`));

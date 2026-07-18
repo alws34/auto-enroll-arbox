@@ -135,6 +135,25 @@ test("POST /api/login/2fa rejects a garbage/expired pending token", async () => 
 	assert.equal(res.status, 401);
 });
 
+test("GET /api/me returns id/username/isAdmin for a valid session", async () => {
+	const { usersRepo, app } = setup();
+	usersRepo.create({ username: "alon", passwordHash: await hashPassword("secret123"), isAdmin: true });
+	const loginRes = await request(app).post("/api/login").send({ username: "alon", password: "secret123" });
+	const cookie = loginRes.headers["set-cookie"];
+	const res = await request(app).get("/api/me").set("Cookie", cookie);
+	assert.equal(res.status, 200);
+	assert.equal(res.body.username, "alon");
+	assert.equal(res.body.isAdmin, true);
+});
+
+test("GET /api/me 401s with no cookie, and with a garbage cookie", async () => {
+	const { app } = setup();
+	const noCookie = await request(app).get("/api/me");
+	assert.equal(noCookie.status, 401);
+	const badCookie = await request(app).get("/api/me").set("Cookie", "session=not-a-real-token");
+	assert.equal(badCookie.status, 401);
+});
+
 test("requireAdmin rejects non-admin users", async () => {
 	const { usersRepo, app } = setup();
 	usersRepo.create({ username: "alon", passwordHash: await hashPassword("secret123"), isAdmin: false });

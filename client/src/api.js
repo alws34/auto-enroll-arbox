@@ -23,6 +23,7 @@ export const api = {
 	loginTwoFactor: (pendingToken, code) =>
 		request("/login/2fa", { method: "POST", body: JSON.stringify({ pendingToken, code }) }),
 	logout: () => request("/logout", { method: "POST" }),
+	getMe: () => request("/me"),
 	get2FA: () => request("/me/2fa"),
 	setup2FA: () => request("/me/2fa/setup", { method: "POST" }),
 	confirm2FA: (code) => request("/me/2fa/confirm", { method: "POST", body: JSON.stringify({ code }) }),

@@ -1,5 +1,6 @@
 import express from "express";
 import { generateTotpSecret, totpKeyUri, totpQrCodeDataUrl, verifyTotpCode } from "../auth/totp.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 export function createTwoFactorRoutes({ usersRepo, totpRepo }) {
 	const router = express.Router();
@@ -9,14 +10,17 @@ export function createTwoFactorRoutes({ usersRepo, totpRepo }) {
 		res.json({ enabled: !!existing?.enabled });
 	});
 
-	router.post("/setup", async (req, res) => {
-		const user = usersRepo.findById(req.user.id);
-		const secret = generateTotpSecret();
-		totpRepo.setPendingSecret(req.user.id, secret);
-		const otpauthUrl = totpKeyUri(user.username, secret);
-		const qrCodeDataUrl = await totpQrCodeDataUrl(otpauthUrl);
-		res.json({ secret, otpauthUrl, qrCodeDataUrl });
-	});
+	router.post(
+		"/setup",
+		asyncHandler(async (req, res) => {
+			const user = usersRepo.findById(req.user.id);
+			const secret = generateTotpSecret();
+			totpRepo.setPendingSecret(req.user.id, secret);
+			const otpauthUrl = totpKeyUri(user.username, secret);
+			const qrCodeDataUrl = await totpQrCodeDataUrl(otpauthUrl);
+			res.json({ secret, otpauthUrl, qrCodeDataUrl });
+		})
+	);
 
 	router.post("/confirm", (req, res) => {
 		const { code } = req.body || {};

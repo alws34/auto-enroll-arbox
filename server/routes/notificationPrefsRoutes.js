@@ -1,5 +1,6 @@
 import express from "express";
 import { sendTestEmail } from "../notifications/sendEmail.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 export function createNotificationPrefsRoutes({ usersRepo, transporter, fromEmailProvider }) {
 	const router = express.Router();
@@ -18,13 +19,16 @@ export function createNotificationPrefsRoutes({ usersRepo, transporter, fromEmai
 		res.json({ email: email || null, emailNotificationsEnabled: emailNotificationsEnabled !== false });
 	});
 
-	router.post("/test", async (req, res) => {
-		const user = usersRepo.findById(req.user.id);
-		if (!user.email) return res.status(400).json({ error: "Set a notification email first" });
-		if (!transporter) return res.status(503).json({ error: "Email is not configured on this server" });
-		await sendTestEmail({ transporter, fromAddress: fromEmailProvider(), toEmail: user.email });
-		res.json({ sent: true });
-	});
+	router.post(
+		"/test",
+		asyncHandler(async (req, res) => {
+			const user = usersRepo.findById(req.user.id);
+			if (!user.email) return res.status(400).json({ error: "Set a notification email first" });
+			if (!transporter) return res.status(503).json({ error: "Email is not configured on this server" });
+			await sendTestEmail({ transporter, fromAddress: fromEmailProvider(), toEmail: user.email });
+			res.json({ sent: true });
+		})
+	);
 
 	return router;
 }
