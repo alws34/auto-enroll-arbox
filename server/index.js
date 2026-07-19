@@ -94,11 +94,13 @@ reminderEngine.start();
 
 const app = express();
 app.set("trust proxy", true);
+app.set("etag", false);
 app.use(express.json());
 app.use(cookieParser());
 
 app.use((req, res, next) => {
 	if (!req.path.startsWith("/api")) return next();
+	res.setHeader("Cache-Control", "no-store");
 	const start = Date.now();
 	res.on("finish", () => {
 		console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`);
