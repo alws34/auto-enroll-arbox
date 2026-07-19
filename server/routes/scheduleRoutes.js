@@ -1,5 +1,6 @@
 import express from "express";
 import { computeFireAt, classTimesToUtc } from "../scheduling/fireAt.js";
+import { arboxErrorMessage } from "../arbox/client.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }) {
@@ -70,7 +71,10 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, u
 
 			const { token, refreshToken } = await arboxClient.login(creds.email, creds.password);
 			const membershipUserId = await arboxClient.getMembership(token, refreshToken);
-			await arboxClient.cancel(token, refreshToken, { scheduleId, membershipUserId });
+			const result = await arboxClient.cancel(token, refreshToken, { scheduleId, membershipUserId });
+			if (result.status !== 200) {
+				return res.status(400).json({ error: arboxErrorMessage(result.body) });
+			}
 
 			const job = jobsRepo.findByUserAndScheduleId(req.user.id, scheduleId);
 			if (job) jobsRepo.updateStatus(job.id, "cancelled", null);

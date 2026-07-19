@@ -13,7 +13,7 @@ import { createScheduleRoutes } from "./scheduleRoutes.js";
 
 const JWT_SECRET = "test-secret";
 
-function fakeArboxClient(classes, { cancelCalls, scheduleCalls } = {}) {
+function fakeArboxClient(classes, { cancelCalls, scheduleCalls, cancelResult } = {}) {
 	return {
 		login: async () => ({ token: "t", refreshToken: "r", fullName: "Alon" }),
 		getScheduleBetweenDates: async (token, refreshToken, from, to) => {
@@ -24,12 +24,12 @@ function fakeArboxClient(classes, { cancelCalls, scheduleCalls } = {}) {
 		getMembership: async () => 999,
 		cancel: async (token, refreshToken, args) => {
 			cancelCalls?.push(args);
-			return { data: {} };
+			return cancelResult || { status: 200, body: { data: {} } };
 		},
 	};
 }
 
-function setup(classes) {
+function setup(classes, { cancelResult } = {}) {
 	const db = createDb(":memory:");
 	const usersRepo = createUsersRepo(db);
 	const credentialsRepo = createCredentialsRepo(db, "enc-key");
@@ -38,7 +38,7 @@ function setup(classes) {
 	credentialsRepo.set(user.id, { email: "a@b.com", password: "gympw" });
 	const cancelCalls = [];
 	const scheduleCalls = [];
-	const arboxClient = fakeArboxClient(classes, { cancelCalls, scheduleCalls });
+	const arboxClient = fakeArboxClient(classes, { cancelCalls, scheduleCalls, cancelResult });
 	const app = express();
 	app.use(express.json());
 	app.use(cookieParser());
@@ -157,6 +157,37 @@ test("DELETE /api/schedule/:scheduleId cancels the real Arbox booking even with 
 	assert.equal(cancelCalls.length, 1);
 	assert.equal(cancelCalls[0].scheduleId, 999333);
 	assert.equal(cancelCalls[0].membershipUserId, 999);
+});
+
+test("DELETE /api/schedule/:scheduleId returns 400 with Arbox's message on a business-rule rejection (e.g. class already started)", async () => {
+	const { app, cookie, jobsRepo, user } = setup([], {
+		cancelResult: {
+			status: 513,
+			body: {
+				error: {
+					message: "Schedule Exception",
+					messageToUser: "W.O.D Hall A has already begun, please register for an upcoming class",
+					code: 513,
+				},
+			},
+		},
+	});
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 999555,
+		classDate: "2026-07-19",
+		classTime: "18:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: "2026-07-16T15:00:00.000Z",
+	});
+	jobsRepo.updateStatus(job.id, "success", null);
+
+	const res = await request(app).delete("/api/schedule/999555").set("Cookie", cookie);
+	assert.equal(res.status, 400);
+	assert.equal(res.body.error, "W.O.D Hall A has already begun, please register for an upcoming class");
+	// Arbox rejected the cancel — the local job must still show success, not cancelled.
+	assert.equal(jobsRepo.findByIdUnscoped(job.id).status, "success");
 });
 
 test("DELETE /api/schedule/:scheduleId also marks a matching local job cancelled if one exists", async () => {

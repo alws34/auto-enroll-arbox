@@ -29,20 +29,21 @@ export function SchedulePage() {
 	const [classes, setClasses] = useState([]);
 	const [quota, setQuota] = useState({ used: 0, limit: 0 });
 	const [selectedDate, setSelectedDate] = useState(null);
-	const [error, setError] = useState(null);
+	const [loadError, setLoadError] = useState(null);
+	const [actionError, setActionError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [modalClass, setModalClass] = useState(null);
 
 	async function load() {
 		setLoading(true);
-		setError(null);
+		setLoadError(null);
 		try {
 			const data = await api.getSchedule(WEEK_LENGTH, weekStart);
 			setClasses(data.classes);
 			setQuota(data.quota);
 			setSelectedDate(weekStart);
 		} catch (err) {
-			setError(err.message);
+			setLoadError(err.message);
 		} finally {
 			setLoading(false);
 		}
@@ -60,33 +61,40 @@ export function SchedulePage() {
 	const visibleClasses = classes.filter((c) => c.date === selectedDate);
 
 	async function handleSchedule(classInfo) {
+		setActionError(null);
 		try {
 			await api.scheduleJob(classInfo.id, classInfo.date);
 			await load();
 		} catch (err) {
-			setError(err.message);
+			setActionError(err.message);
 		}
 	}
 
 	// Arbox is the source of truth for booking state — a class registered from the
 	// official app has no local job row, so cancelling it can't go through /jobs/:id.
+	// Returns { ok, error } so the detail modal knows whether to close itself and can
+	// show the failure (e.g. Arbox's "class already started") without losing context.
 	async function handleCancel(classInfo) {
+		setActionError(null);
 		try {
 			if (classInfo.jobId) await api.cancelJob(classInfo.jobId);
 			else await api.cancelArboxRegistration(classInfo.id);
 			await load();
+			return { ok: true };
 		} catch (err) {
-			setError(err.message);
+			setActionError(err.message);
+			return { ok: false, error: err.message };
 		}
 	}
 
 	if (loading) return <p className="page-status">Loading schedule…</p>;
-	if (error) return <p className="page-status page-error">{error}</p>;
+	if (loadError) return <p className="page-status page-error">{loadError}</p>;
 
 	return (
 		<div className="schedule-page">
 			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
+			{actionError && <p className="page-error action-error">{actionError}</p>}
 			<div className="week-nav">
 				<button className="btn btn-secondary" onClick={() => setWeekStart((w) => addDaysIso(w, -WEEK_LENGTH))}>
 					‹

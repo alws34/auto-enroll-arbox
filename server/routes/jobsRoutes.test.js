@@ -13,7 +13,7 @@ import { createJobsRoutes } from "./jobsRoutes.js";
 
 const JWT_SECRET = "test-secret";
 
-function setup() {
+function setup({ cancelResult } = {}) {
 	const db = createDb(":memory:");
 	const usersRepo = createUsersRepo(db);
 	const credentialsRepo = createCredentialsRepo(db, "enc-key");
@@ -33,7 +33,7 @@ function setup() {
 			{ id: 111, date: "2026-07-20", time: "06:00", box_categories: { name: "W.O.D" }, enable_registration_time: 72 },
 		],
 		getMembership: async () => 999,
-		cancel: async () => ({}),
+		cancel: async () => cancelResult || { status: 200, body: { data: {} } },
 	};
 
 	const app = express();
@@ -91,6 +91,29 @@ test("DELETE /api/jobs/:id on a successful job cancels the real Arbox booking", 
 	const res = await request(app).delete(`/api/jobs/${job.id}`).set("Cookie", cookie);
 	assert.equal(res.status, 200);
 	assert.equal(res.body.status, "cancelled");
+});
+
+test("DELETE /api/jobs/:id returns 400 with Arbox's message on a business-rule rejection, leaves the job as success", async () => {
+	const { app, cookie, jobsRepo, user } = setup({
+		cancelResult: {
+			status: 513,
+			body: { error: { messageToUser: "W.O.D Hall A has already begun, please register for an upcoming class" } },
+		},
+	});
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 111,
+		classDate: "2026-07-20",
+		classTime: "06:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: new Date().toISOString(),
+	});
+	jobsRepo.updateStatus(job.id, "success", null);
+	const res = await request(app).delete(`/api/jobs/${job.id}`).set("Cookie", cookie);
+	assert.equal(res.status, 400);
+	assert.equal(res.body.error, "W.O.D Hall A has already begun, please register for an upcoming class");
+	assert.equal(jobsRepo.findByIdUnscoped(job.id).status, "success");
 });
 
 test("DELETE /api/jobs/:id 404s for a job that doesn't belong to the caller", async () => {

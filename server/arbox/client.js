@@ -1,6 +1,19 @@
 import nodeFetch from "node-fetch";
 import { WHITELABEL, BOX_ID, LOCATIONS_BOX_ID, BASE_URL } from "./constants.js";
 
+// Arbox is inconsistent about the shape of error.messageToUser — sometimes a
+// plain string (e.g. cancel: "class has already begun"), sometimes an array
+// of {message} objects (e.g. enroll: category frequency limit). Handle both.
+export function arboxErrorMessage(body) {
+	const m = body?.error?.messageToUser;
+	if (typeof m === "string" && m) return m;
+	if (Array.isArray(m) && m.length > 0) {
+		const joined = m.map((x) => x.message).filter(Boolean).join("; ");
+		if (joined) return joined;
+	}
+	return body?.error?.message || body?.message || "Request failed";
+}
+
 function authHeaders(token, refreshToken) {
 	return {
 		Accept: "application/json, text/plain, */*",
@@ -64,8 +77,7 @@ export function createArboxClient({ fetchImpl = nodeFetch } = {}) {
 			body: JSON.stringify({ schedule_id: scheduleId, membership_user_id: membershipUserId }),
 		});
 		const body = await res.json();
-		if (res.status !== 200) throw new Error(`Arbox cancel failed: ${JSON.stringify(body)}`);
-		return body;
+		return { status: res.status, body };
 	}
 
 	async function getQuota(token, refreshToken) {

@@ -36,8 +36,12 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 	});
 
 	async function handleCancel() {
-		await onCancel(classInfo);
-		onClose();
+		const result = await onCancel(classInfo);
+		if (result.ok) {
+			onClose();
+		} else {
+			setError(result.error);
+		}
 	}
 
 	async function handleAddReminder() {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createArboxClient } from "./client.js";
+import { createArboxClient, arboxErrorMessage } from "./client.js";
 
 function fakeFetch(responses) {
 	let call = 0;
@@ -78,12 +78,43 @@ test("enroll returns status and body without throwing on non-200 (caller classif
 	assert.deepEqual(fetchImpl.calls[0].opts.body, { extras: null, membership_user_id: 9, schedule_id: 5 });
 });
 
-test("cancel posts to scheduleUser/delete with schedule_id and membership_user_id", async () => {
+test("cancel posts to scheduleUser/delete with schedule_id and membership_user_id, returns status 200 on success", async () => {
 	const fetchImpl = fakeFetch([{ status: 200, body: { data: {} } }]);
 	const client = createArboxClient({ fetchImpl });
-	await client.cancel("t1", "r1", { scheduleId: 5, membershipUserId: 9 });
+	const result = await client.cancel("t1", "r1", { scheduleId: 5, membershipUserId: 9 });
+	assert.equal(result.status, 200);
 	assert.ok(fetchImpl.calls[0].url.endsWith("/scheduleUser/delete"));
 	assert.deepEqual(fetchImpl.calls[0].opts.body, { schedule_id: 5, membership_user_id: 9 });
+});
+
+test("cancel returns status and body without throwing on a business-rule rejection (caller classifies it)", async () => {
+	const fetchImpl = fakeFetch([
+		{
+			status: 513,
+			body: {
+				statusCode: 513,
+				error: {
+					message: "Schedule Exception",
+					messageToUser: "W.O.D Hall A has already begun, please register for an upcoming class",
+					code: 513,
+				},
+				data: null,
+			},
+		},
+	]);
+	const client = createArboxClient({ fetchImpl });
+	const result = await client.cancel("t1", "r1", { scheduleId: 5, membershipUserId: 9 });
+	assert.equal(result.status, 513);
+	assert.equal(arboxErrorMessage(result.body), "W.O.D Hall A has already begun, please register for an upcoming class");
+});
+
+test("arboxErrorMessage handles the array-of-objects messageToUser shape too", () => {
+	const body = { error: { message: "Schedule Exception List", messageToUser: [{ message: "limit reached" }] } };
+	assert.equal(arboxErrorMessage(body), "limit reached");
+});
+
+test("arboxErrorMessage falls back to error.message when messageToUser is absent", () => {
+	assert.equal(arboxErrorMessage({ message: "Server Error" }), "Server Error");
 });
 
 test("getQuota returns used = past + future registrations", async () => {
