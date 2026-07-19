@@ -1,6 +1,6 @@
 import express from "express";
 import { computeFireAt, classTimesToUtc } from "../scheduling/fireAt.js";
-import { arboxErrorMessage } from "../arbox/client.js";
+import { arboxErrorMessage, findMembershipForBooking } from "../arbox/client.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, usersRepo }) {
@@ -66,11 +66,25 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, u
 		"/:scheduleId",
 		asyncHandler(async (req, res) => {
 			const scheduleId = Number(req.params.scheduleId);
+			const classDate = req.query.classDate;
+			if (!classDate) return res.status(400).json({ error: "classDate query param is required" });
+
 			const creds = credentialsRepo.get(req.user.id);
 			if (!creds) return res.status(400).json({ error: "Arbox credentials not configured" });
 
-			const { token, refreshToken } = await arboxClient.login(creds.email, creds.password);
-			const membershipUserId = await arboxClient.getMembership(token, refreshToken);
+			const { token, refreshToken, arboxUserId } = await arboxClient.login(creds.email, creds.password);
+
+			// Cancelling requires the membership_user_id that actually owns THIS booking —
+			// a user can have more than one active membership, and "pick any active one"
+			// (fine when creating a new booking) silently no-ops against the wrong one here.
+			const dayStart = `${classDate}T00:00:00.000Z`;
+			const dayClasses = await arboxClient.getScheduleBetweenDates(token, refreshToken, dayStart, dayStart);
+			const targetClass = dayClasses.find((c) => c.id === scheduleId);
+			const membershipUserId = targetClass ? findMembershipForBooking(targetClass, arboxUserId) : null;
+			if (!membershipUserId) {
+				return res.status(400).json({ error: "Could not find your registration for this class" });
+			}
+
 			const result = await arboxClient.cancel(token, refreshToken, { scheduleId, membershipUserId });
 			if (result.status !== 200) {
 				return res.status(400).json({ error: arboxErrorMessage(result.body) });

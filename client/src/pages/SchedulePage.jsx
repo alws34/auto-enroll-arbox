@@ -78,7 +78,7 @@ export function SchedulePage() {
 		setActionError(null);
 		try {
 			if (classInfo.jobId) await api.cancelJob(classInfo.jobId);
-			else await api.cancelArboxRegistration(classInfo.id);
+			else await api.cancelArboxRegistration(classInfo.id, classInfo.date);
 			await load();
 			return { ok: true };
 		} catch (err) {

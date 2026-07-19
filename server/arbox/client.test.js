@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createArboxClient, arboxErrorMessage } from "./client.js";
+import { createArboxClient, arboxErrorMessage, findMembershipForBooking } from "./client.js";
 
 function fakeFetch(responses) {
 	let call = 0;
@@ -14,15 +14,16 @@ function fakeFetch(responses) {
 	return fn;
 }
 
-test("login sends the whitelabel header and returns token/refreshToken/fullName", async () => {
+test("login sends the whitelabel header and returns token/refreshToken/fullName/arboxUserId", async () => {
 	const fetchImpl = fakeFetch([
-		{ status: 200, body: { data: { token: "t1", refreshToken: "r1", full_name: "Alon W" } } },
+		{ status: 200, body: { data: { id: 9454502, token: "t1", refreshToken: "r1", full_name: "Alon W" } } },
 	]);
 	const client = createArboxClient({ fetchImpl });
 	const result = await client.login("a@b.com", "pw");
 	assert.equal(result.token, "t1");
 	assert.equal(result.refreshToken, "r1");
 	assert.equal(result.fullName, "Alon W");
+	assert.equal(result.arboxUserId, 9454502);
 	assert.equal(fetchImpl.calls[0].opts.headers.whitelabel, "hypr-training");
 	assert.deepEqual(fetchImpl.calls[0].opts.body, { email: "a@b.com", password: "pw" });
 });
@@ -115,6 +116,27 @@ test("arboxErrorMessage handles the array-of-objects messageToUser shape too", (
 
 test("arboxErrorMessage falls back to error.message when messageToUser is absent", () => {
 	assert.equal(arboxErrorMessage({ message: "Server Error" }), "Server Error");
+});
+
+test("findMembershipForBooking finds the membership tied to this specific user's registration on this class", () => {
+	const classObj = {
+		booked_users: [
+			{ id: 111, membership_user_fk: 5001 },
+			{ id: 9454502, membership_user_fk: 16679689 },
+			{ id: 222, membership_user_fk: 5002 },
+		],
+	};
+	assert.equal(findMembershipForBooking(classObj, 9454502), 16679689);
+});
+
+test("findMembershipForBooking returns null when the user isn't in the booked list", () => {
+	const classObj = { booked_users: [{ id: 111, membership_user_fk: 5001 }] };
+	assert.equal(findMembershipForBooking(classObj, 9454502), null);
+});
+
+test("findMembershipForBooking handles a missing/empty booked_users list", () => {
+	assert.equal(findMembershipForBooking({}, 9454502), null);
+	assert.equal(findMembershipForBooking({ booked_users: [] }, 9454502), null);
 });
 
 test("getQuota returns used = past + future registrations", async () => {

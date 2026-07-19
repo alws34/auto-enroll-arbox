@@ -1,6 +1,6 @@
 import express from "express";
 import { computeFireAt } from "../scheduling/fireAt.js";
-import { arboxErrorMessage } from "../arbox/client.js";
+import { arboxErrorMessage, findMembershipForBooking } from "../arbox/client.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export function createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }) {
@@ -49,8 +49,18 @@ export function createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, sched
 				jobsRepo.updateStatus(job.id, "cancelled", null);
 			} else if (job.status === "success" || job.status === "waitlisted") {
 				const creds = credentialsRepo.get(req.user.id);
-				const { token, refreshToken } = await arboxClient.login(creds.email, creds.password);
-				const membershipUserId = await arboxClient.getMembership(token, refreshToken);
+				const { token, refreshToken, arboxUserId } = await arboxClient.login(creds.email, creds.password);
+
+				// Same reasoning as scheduleRoutes' cancel: must use the membership that
+				// actually owns this booking, not just any active one on the account.
+				const dayStart = `${job.class_date}T00:00:00.000Z`;
+				const dayClasses = await arboxClient.getScheduleBetweenDates(token, refreshToken, dayStart, dayStart);
+				const targetClass = dayClasses.find((c) => c.id === job.schedule_id);
+				const membershipUserId = targetClass ? findMembershipForBooking(targetClass, arboxUserId) : null;
+				if (!membershipUserId) {
+					return res.status(400).json({ error: "Could not find your registration for this class" });
+				}
+
 				const result = await arboxClient.cancel(token, refreshToken, { scheduleId: job.schedule_id, membershipUserId });
 				if (result.status !== 200) {
 					return res.status(400).json({ error: arboxErrorMessage(result.body) });

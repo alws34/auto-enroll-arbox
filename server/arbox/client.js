@@ -14,6 +14,18 @@ export function arboxErrorMessage(body) {
 	return body?.error?.message || body?.message || "Request failed";
 }
 
+// A user can have more than one active membership at once (e.g. a recurring
+// plan plus a leftover single-session credit). Each booking is tied to a
+// specific one via booked_users[].membership_user_fk — "first active
+// membership" (used when creating a booking, before it exists) is the wrong
+// thing to pass when *cancelling* an existing one: Arbox silently no-ops
+// (200, nothing actually removed) if the membership_user_id doesn't match
+// the booking's real owner.
+export function findMembershipForBooking(classObj, arboxUserId) {
+	const entry = (classObj?.booked_users || []).find((u) => u.id === arboxUserId);
+	return entry?.membership_user_fk ?? null;
+}
+
 function authHeaders(token, refreshToken) {
 	return {
 		Accept: "application/json, text/plain, */*",
@@ -35,7 +47,12 @@ export function createArboxClient({ fetchImpl = nodeFetch } = {}) {
 		if (res.status !== 200) {
 			throw new Error(`Arbox login failed: ${JSON.stringify(body)}`);
 		}
-		return { token: body.data.token, refreshToken: body.data.refreshToken, fullName: body.data.full_name };
+		return {
+			token: body.data.token,
+			refreshToken: body.data.refreshToken,
+			fullName: body.data.full_name,
+			arboxUserId: body.data.id,
+		};
 	}
 
 	async function getMembership(token, refreshToken) {

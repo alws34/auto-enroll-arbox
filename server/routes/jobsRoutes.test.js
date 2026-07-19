@@ -12,6 +12,7 @@ import { requireAuth } from "../auth/middleware.js";
 import { createJobsRoutes } from "./jobsRoutes.js";
 
 const JWT_SECRET = "test-secret";
+const ARBOX_USER_ID = 9454502;
 
 function setup({ cancelResult } = {}) {
 	const db = createDb(":memory:");
@@ -23,17 +24,28 @@ function setup({ cancelResult } = {}) {
 
 	const armedJobs = [];
 	const cancelledJobIds = [];
+	const cancelCalls = [];
 	const scheduler = {
 		arm: (job) => armedJobs.push(job.id),
 		cancelTimer: (id) => cancelledJobIds.push(id),
 	};
 	const arboxClient = {
-		login: async () => ({ token: "t", refreshToken: "r" }),
+		login: async () => ({ token: "t", refreshToken: "r", arboxUserId: ARBOX_USER_ID }),
 		getScheduleBetweenDates: async () => [
-			{ id: 111, date: "2026-07-20", time: "06:00", box_categories: { name: "W.O.D" }, enable_registration_time: 72 },
+			{
+				id: 111,
+				date: "2026-07-20",
+				time: "06:00",
+				box_categories: { name: "W.O.D" },
+				enable_registration_time: 72,
+				booked_users: [{ id: ARBOX_USER_ID, membership_user_fk: 16679689 }],
+			},
 		],
 		getMembership: async () => 999,
-		cancel: async () => cancelResult || { status: 200, body: { data: {} } },
+		cancel: async (token, refreshToken, args) => {
+			cancelCalls.push(args);
+			return cancelResult || { status: 200, body: { data: {} } };
+		},
 	};
 
 	const app = express();
@@ -42,7 +54,7 @@ function setup({ cancelResult } = {}) {
 	app.use(requireAuth({ jwtSecret: JWT_SECRET }));
 	app.use("/api/jobs", createJobsRoutes({ jobsRepo, credentialsRepo, arboxClient, scheduler }));
 	const cookie = `session=${signSession({ id: user.id, isAdmin: false }, JWT_SECRET)}`;
-	return { app, cookie, user, jobsRepo, armedJobs, cancelledJobIds };
+	return { app, cookie, user, jobsRepo, armedJobs, cancelledJobIds, cancelCalls };
 }
 
 test("POST /api/jobs creates a job, arms the scheduler, and returns it", async () => {
@@ -91,6 +103,23 @@ test("DELETE /api/jobs/:id on a successful job cancels the real Arbox booking", 
 	const res = await request(app).delete(`/api/jobs/${job.id}`).set("Cookie", cookie);
 	assert.equal(res.status, 200);
 	assert.equal(res.body.status, "cancelled");
+});
+
+test("DELETE /api/jobs/:id resolves the membership that actually owns this booking, not just any active one", async () => {
+	const { app, cookie, jobsRepo, user, cancelCalls } = setup();
+	const job = jobsRepo.create({
+		userId: user.id,
+		scheduleId: 111,
+		classDate: "2026-07-20",
+		classTime: "06:00",
+		className: "W.O.D",
+		enableRegistrationTime: 72,
+		fireAt: new Date().toISOString(),
+	});
+	jobsRepo.updateStatus(job.id, "success", null);
+	await request(app).delete(`/api/jobs/${job.id}`).set("Cookie", cookie);
+	assert.equal(cancelCalls.length, 1);
+	assert.equal(cancelCalls[0].membershipUserId, 16679689); // not the getMembership() stub's 999
 });
 
 test("DELETE /api/jobs/:id returns 400 with Arbox's message on a business-rule rejection, leaves the job as success", async () => {

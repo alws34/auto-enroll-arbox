@@ -12,10 +12,11 @@ import { requireAuth } from "../auth/middleware.js";
 import { createScheduleRoutes } from "./scheduleRoutes.js";
 
 const JWT_SECRET = "test-secret";
+const ARBOX_USER_ID = 9454502;
 
 function fakeArboxClient(classes, { cancelCalls, scheduleCalls, cancelResult } = {}) {
 	return {
-		login: async () => ({ token: "t", refreshToken: "r", fullName: "Alon" }),
+		login: async () => ({ token: "t", refreshToken: "r", fullName: "Alon", arboxUserId: ARBOX_USER_ID }),
 		getScheduleBetweenDates: async (token, refreshToken, from, to) => {
 			scheduleCalls?.push({ from, to });
 			return classes;
@@ -150,28 +151,60 @@ test("GET /api/schedule trusts Arbox's user_in_standby as waitlisted", async () 
 	assert.equal(res.body.classes[0].jobStatus, "waitlisted");
 });
 
-test("DELETE /api/schedule/:scheduleId cancels the real Arbox booking even with no local job row", async () => {
-	const { app, cookie, cancelCalls } = setup([]);
+test("DELETE /api/schedule/:scheduleId requires a classDate query param", async () => {
+	const { app, cookie } = setup([]);
 	const res = await request(app).delete("/api/schedule/999333").set("Cookie", cookie);
+	assert.equal(res.status, 400);
+});
+
+test("DELETE /api/schedule/:scheduleId resolves the membership that actually owns this booking, not just any active one", async () => {
+	const { app, cookie, cancelCalls } = setup([
+		{
+			id: 999333,
+			date: "2026-07-19",
+			booked_users: [
+				{ id: 111111, membership_user_fk: 5001 }, // someone else
+				{ id: ARBOX_USER_ID, membership_user_fk: 16679689 }, // the caller's actual membership for this booking
+			],
+		},
+	]);
+	const res = await request(app).delete("/api/schedule/999333?classDate=2026-07-19").set("Cookie", cookie);
 	assert.equal(res.status, 200);
 	assert.equal(cancelCalls.length, 1);
 	assert.equal(cancelCalls[0].scheduleId, 999333);
-	assert.equal(cancelCalls[0].membershipUserId, 999);
+	assert.equal(cancelCalls[0].membershipUserId, 16679689); // not the getMembership() stub's 999
+});
+
+test("DELETE /api/schedule/:scheduleId 400s when the caller isn't found in the class's booked_users list", async () => {
+	const { app, cookie } = setup([
+		{ id: 999333, date: "2026-07-19", booked_users: [{ id: 111111, membership_user_fk: 5001 }] },
+	]);
+	const res = await request(app).delete("/api/schedule/999333?classDate=2026-07-19").set("Cookie", cookie);
+	assert.equal(res.status, 400);
 });
 
 test("DELETE /api/schedule/:scheduleId returns 400 with Arbox's message on a business-rule rejection (e.g. class already started)", async () => {
-	const { app, cookie, jobsRepo, user } = setup([], {
-		cancelResult: {
-			status: 513,
-			body: {
-				error: {
-					message: "Schedule Exception",
-					messageToUser: "W.O.D Hall A has already begun, please register for an upcoming class",
-					code: 513,
+	const { app, cookie, jobsRepo, user } = setup(
+		[
+			{
+				id: 999555,
+				date: "2026-07-19",
+				booked_users: [{ id: ARBOX_USER_ID, membership_user_fk: 16679689 }],
+			},
+		],
+		{
+			cancelResult: {
+				status: 513,
+				body: {
+					error: {
+						message: "Schedule Exception",
+						messageToUser: "W.O.D Hall A has already begun, please register for an upcoming class",
+						code: 513,
+					},
 				},
 			},
-		},
-	});
+		}
+	);
 	const job = jobsRepo.create({
 		userId: user.id,
 		scheduleId: 999555,
@@ -183,7 +216,7 @@ test("DELETE /api/schedule/:scheduleId returns 400 with Arbox's message on a bus
 	});
 	jobsRepo.updateStatus(job.id, "success", null);
 
-	const res = await request(app).delete("/api/schedule/999555").set("Cookie", cookie);
+	const res = await request(app).delete("/api/schedule/999555?classDate=2026-07-19").set("Cookie", cookie);
 	assert.equal(res.status, 400);
 	assert.equal(res.body.error, "W.O.D Hall A has already begun, please register for an upcoming class");
 	// Arbox rejected the cancel — the local job must still show success, not cancelled.
@@ -191,7 +224,13 @@ test("DELETE /api/schedule/:scheduleId returns 400 with Arbox's message on a bus
 });
 
 test("DELETE /api/schedule/:scheduleId also marks a matching local job cancelled if one exists", async () => {
-	const { app, cookie, user, jobsRepo } = setup([]);
+	const { app, cookie, user, jobsRepo } = setup([
+		{
+			id: 999444,
+			date: "2026-07-19",
+			booked_users: [{ id: ARBOX_USER_ID, membership_user_fk: 16679689 }],
+		},
+	]);
 	const job = jobsRepo.create({
 		userId: user.id,
 		scheduleId: 999444,
@@ -202,7 +241,7 @@ test("DELETE /api/schedule/:scheduleId also marks a matching local job cancelled
 		fireAt: "2026-07-16T15:00:00.000Z",
 	});
 	jobsRepo.updateStatus(job.id, "success", null);
-	await request(app).delete("/api/schedule/999444").set("Cookie", cookie);
+	await request(app).delete("/api/schedule/999444?classDate=2026-07-19").set("Cookie", cookie);
 	assert.equal(jobsRepo.findByIdUnscoped(job.id).status, "cancelled");
 });
 
