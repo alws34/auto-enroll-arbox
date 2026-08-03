@@ -47,6 +47,18 @@ test("GET /api/workout/:workoutId returns the sections from Arbox's logbook", as
 	assert.deepEqual(workoutCalls, [310859]);
 });
 
+test("GET /api/workout/:workoutId also tags the class with the muscle groups its WOD text implies", async () => {
+	const { app, cookie } = setup([{ section: "Metcon", text: "20 KB Swings", date: "2026-08-03" }]);
+	const res = await request(app).get("/api/workout/310859").set("Cookie", cookie);
+	assert.deepEqual(new Set(res.body.muscleGroups), new Set(["Glutes", "Hamstrings", "Back"]));
+});
+
+test("GET /api/workout/:workoutId returns an empty muscleGroups list when the text matches no known movement", async () => {
+	const { app, cookie } = setup([{ section: "Announcements", text: "Coach's birthday party today!", date: "2026-08-03" }]);
+	const res = await request(app).get("/api/workout/310859").set("Cookie", cookie);
+	assert.deepEqual(res.body.muscleGroups, []);
+});
+
 test("GET /api/workout/:workoutId 400s on a non-numeric id", async () => {
 	const { app, cookie } = setup([]);
 	const res = await request(app).get("/api/workout/not-a-number").set("Cookie", cookie);

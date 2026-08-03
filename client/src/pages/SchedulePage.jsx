@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { DayTabs } from "../components/DayTabs.jsx";
 import { ClassRow } from "../components/ClassRow.jsx";
@@ -7,6 +8,7 @@ import { StatusLegend } from "../components/StatusLegend.jsx";
 import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
 import { WeekGridDesktop } from "../components/WeekGridDesktop.jsx";
 import { ClassDetailModal } from "../components/ClassDetailModal.jsx";
+import { MuscleMap, MUSCLE_GROUPS } from "../components/MuscleMap.jsx";
 
 const WEEK_LENGTH = 7;
 
@@ -34,6 +36,7 @@ export function SchedulePage() {
 	const [actionError, setActionError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [modalClass, setModalClass] = useState(null);
+	const [muscleTotals, setMuscleTotals] = useState(() => Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, 0])));
 
 	async function load() {
 		setLoading(true);
@@ -52,6 +55,15 @@ export function SchedulePage() {
 
 	useEffect(() => {
 		load();
+	}, [weekStart]);
+
+	// Secondary to the main schedule fetch — a failure here shouldn't block the
+	// page, so it fails quietly and just leaves the map at zero.
+	useEffect(() => {
+		api
+			.getTrainingCoverage(WEEK_LENGTH, weekStart)
+			.then((data) => setMuscleTotals(data.totals))
+			.catch(() => {});
 	}, [weekStart]);
 
 	const days = useMemo(
@@ -96,6 +108,15 @@ export function SchedulePage() {
 			<StatusLegend />
 			<QuotaStrip used={quota.used} limit={quota.limit} />
 			{actionError && <p className="page-error action-error">{actionError}</p>}
+
+			<div className="muscle-map-summary">
+				<h3 className="section-heading">This week's muscle coverage</h3>
+				<MuscleMap totals={muscleTotals} size="compact" />
+				<Link to="/training-plan" className="btn-link muscle-map-summary-link">
+					See full training plan ›
+				</Link>
+			</div>
+
 			<div className="week-nav">
 				<button className="btn btn-secondary" onClick={() => setWeekStart((w) => addDaysIso(w, -WEEK_LENGTH))}>
 					‹

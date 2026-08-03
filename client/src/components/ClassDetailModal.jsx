@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { buildGoogleCalendarUrl } from "../googleCalendar.js";
 import { api } from "../api.js";
+import { MuscleMap, MUSCLE_GROUPS } from "./MuscleMap.jsx";
+import { categoryFallbackGroups } from "../muscleCategoryFallback.js";
 
 const REMINDER_OPTIONS = [
 	{ value: 15, label: "15 minutes before" },
@@ -32,14 +34,21 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 			setWorkout({ status: "idle", sections: [] });
 			return;
 		}
-		setWorkout({ status: "loading", sections: [] });
+		setWorkout({ status: "loading", sections: [], muscleGroups: [] });
 		api
 			.getWorkout(classInfo.workoutId)
-			.then((res) => setWorkout({ status: "loaded", sections: res.sections || [] }))
-			.catch(() => setWorkout({ status: "error", sections: [] }));
+			.then((res) => setWorkout({ status: "loaded", sections: res.sections || [], muscleGroups: res.muscleGroups || [] }))
+			.catch(() => setWorkout({ status: "error", sections: [], muscleGroups: [] }));
 	}, [classInfo?.workoutId]);
 
 	if (!classInfo) return null;
+
+	// Server already told us what the WOD text implies (when there is one); fall
+	// back to a coarse guess from the class category when there's no WOD yet,
+	// or its text didn't match any known movement — same rule the weekly
+	// coverage endpoint uses, just computed here instead of round-tripping.
+	const classMuscleGroups = workout.muscleGroups?.length > 0 ? workout.muscleGroups : categoryFallbackGroups(classInfo.name);
+	const classMuscleTotals = Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, classMuscleGroups.includes(g) ? 1 : 0]));
 
 	const calendarUrl = buildGoogleCalendarUrl({
 		title: classInfo.name,
@@ -109,6 +118,16 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 				</p>
 				{classInfo.alreadyScheduled && (
 					<div className={`job-status-badge job-status-${classInfo.jobStatus}`}>{classInfo.jobStatus}</div>
+				)}
+
+				<h3>Muscle groups</h3>
+				{classMuscleGroups.length > 0 ? (
+					<>
+						<MuscleMap totals={classMuscleTotals} size="compact" />
+						<p className="modal-note">{classMuscleGroups.join(", ")}</p>
+					</>
+				) : (
+					<p className="modal-note">Not enough info to guess yet.</p>
 				)}
 
 				<h3>Workout</h3>
