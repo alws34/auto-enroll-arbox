@@ -3,6 +3,8 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .app-nav { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #2a2a2e; align-items: center; }
 .app-nav a { color: #eee; text-decoration: none; font-size: 14px; }
 .app-main { padding: 12px 16px 80px; max-width: 480px; margin: 0 auto; }
+.mobile-only { display: block; }
+.desktop-only { display: none; }
 .btn { border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
 .btn-primary { background: #3ab0f2; color: #041; }
 .btn-secondary { background: #444; color: #eee; }
@@ -65,3 +67,26 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .reminder-remove { background: none; border: none; color: #e05050; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
 .totp-qr { display: block; width: 180px; height: 180px; margin: 8px 0; border-radius: 8px; background: #fff; padding: 8px; }
 .action-error { background: rgba(224, 80, 80, 0.12); border: 1px solid #e05050; border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
+
+/* Dense weekly grid — desktop only (see .desktop-only media query below). */
+.week-grid-desktop { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.week-grid-day { border: 1px solid #2a2a2e; border-radius: 10px; padding: 8px; min-height: 220px; }
+.week-grid-day-label { font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 8px; }
+.week-grid-day-items { display: flex; flex-direction: column; gap: 6px; }
+.week-grid-item { display: block; width: 100%; text-align: left; border: none; border-radius: 8px; padding: 6px 8px; font-size: 12px; color: #111; cursor: pointer; }
+.week-grid-item-open { background: #2a2a2e; color: #eee; border: 1px solid #3a3a3e; }
+.week-grid-item-time { font-weight: 700; }
+.week-grid-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.week-grid-item-meta { font-size: 11px; opacity: 0.75; }
+.week-grid-empty { font-size: 12px; opacity: 0.3; text-align: center; padding-top: 20px; }
+
+/* Below this width: mobile list/day-tabs layout. At/above it: dense desktop
+   calendar grid, and the app shell gets room to breathe instead of the
+   480px mobile-first column. */
+@media (min-width: 900px) {
+	.app-main { max-width: 1200px; padding: 20px 32px 80px; }
+	.mobile-only { display: none; }
+	.desktop-only { display: block; }
+	.status-legend { position: static; margin-bottom: 12px; flex-direction: row; flex-wrap: wrap; background: none; border: none; padding: 0; }
+	.weekly-calendar { min-width: 0; }
+}

@@ -12,11 +12,12 @@ const REMINDER_OPTIONS = [
 
 const MAX_REMINDERS = 2;
 
-export function ClassDetailModal({ classInfo, onClose, onCancel }) {
+export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 	const [reminders, setReminders] = useState([]);
 	const [addingMinutes, setAddingMinutes] = useState(REMINDER_OPTIONS[0].value);
 	const [error, setError] = useState(null);
 	const [workout, setWorkout] = useState({ status: "idle", sections: [] });
+	const [scheduling, setScheduling] = useState(false);
 
 	useEffect(() => {
 		if (!classInfo) return;
@@ -57,6 +58,19 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 		}
 	}
 
+	async function handleSchedule() {
+		setError(null);
+		setScheduling(true);
+		try {
+			await onSchedule(classInfo);
+			onClose();
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setScheduling(false);
+		}
+	}
+
 	async function handleAddReminder() {
 		setError(null);
 		try {
@@ -93,7 +107,9 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 				<p className="modal-meta">
 					{classInfo.bookedCount}/{classInfo.maxUsers} booked
 				</p>
-				<div className={`job-status-badge job-status-${classInfo.jobStatus}`}>{classInfo.jobStatus}</div>
+				{classInfo.alreadyScheduled && (
+					<div className={`job-status-badge job-status-${classInfo.jobStatus}`}>{classInfo.jobStatus}</div>
+				)}
 
 				<h3>Workout</h3>
 				{!classInfo.workoutId && (
@@ -145,12 +161,20 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 				{error && <p className="page-error">{error}</p>}
 
 				<div className="modal-actions">
-					<a className="btn btn-primary" href={calendarUrl} target="_blank" rel="noopener noreferrer">
-						Add to Google Calendar
-					</a>
-					<button className="btn btn-danger" onClick={handleCancel}>
-						Cancel booking
-					</button>
+					{classInfo.alreadyScheduled ? (
+						<>
+							<a className="btn btn-primary" href={calendarUrl} target="_blank" rel="noopener noreferrer">
+								Add to Google Calendar
+							</a>
+							<button className="btn btn-danger" onClick={handleCancel}>
+								Cancel booking
+							</button>
+						</>
+					) : (
+						<button className="btn btn-primary" onClick={handleSchedule} disabled={scheduling}>
+							{scheduling ? "Scheduling…" : "Schedule"}
+						</button>
+					)}
 				</div>
 			</div>
 		</div>

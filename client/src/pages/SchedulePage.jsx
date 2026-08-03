@@ -5,6 +5,7 @@ import { ClassRow } from "../components/ClassRow.jsx";
 import { QuotaStrip } from "../components/QuotaStrip.jsx";
 import { StatusLegend } from "../components/StatusLegend.jsx";
 import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
+import { WeekGridDesktop } from "../components/WeekGridDesktop.jsx";
 import { ClassDetailModal } from "../components/ClassDetailModal.jsx";
 
 const WEEK_LENGTH = 7;
@@ -107,21 +108,35 @@ export function SchedulePage() {
 				</button>
 			</div>
 			<WeeklyCalendar days={days} classes={classes} onSelect={setModalClass} />
-			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
-			<div className="class-list">
-				{visibleClasses.map((c) => (
-					<ClassRow
-						key={c.id}
-						classInfo={c}
-						onSchedule={handleSchedule}
-						onCancel={() => handleCancel(c)}
-						onSelect={setModalClass}
-					/>
-				))}
-				{visibleClasses.length === 0 && <p className="page-status">No classes this day.</p>}
+
+			{/* Mobile: day tabs + single-day list. Desktop: dense weekly grid.
+			    Both render — CSS media queries decide which one is visible. */}
+			<div className="mobile-only">
+				<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
+				<div className="class-list">
+					{visibleClasses.map((c) => (
+						<ClassRow
+							key={c.id}
+							classInfo={c}
+							onSchedule={handleSchedule}
+							onCancel={() => handleCancel(c)}
+							onSelect={setModalClass}
+						/>
+					))}
+					{visibleClasses.length === 0 && <p className="page-status">No classes this day.</p>}
+				</div>
 			</div>
+			<div className="desktop-only">
+				<WeekGridDesktop days={days} classes={classes} onSelect={setModalClass} />
+			</div>
+
 			{modalClass && (
-				<ClassDetailModal classInfo={modalClass} onClose={() => setModalClass(null)} onCancel={handleCancel} />
+				<ClassDetailModal
+					classInfo={modalClass}
+					onClose={() => setModalClass(null)}
+					onCancel={handleCancel}
+					onSchedule={handleSchedule}
+				/>
 			)}
 		</div>
 	);

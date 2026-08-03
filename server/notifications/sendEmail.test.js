@@ -14,7 +14,7 @@ function fakeTransporter(calls, shouldThrow = false) {
 
 test("sends an email to the user's address, returns true", async () => {
 	const calls = [];
-	const usersRepo = { findById: () => ({ email: "alon@example.com", email_notifications_enabled: 1 }) };
+	const usersRepo = { findById: () => ({ email: "alon@example.com", username: "alon", email_notifications_enabled: 1 }) };
 	const notify = createEmailNotifier({
 		transporter: fakeTransporter(calls),
 		usersRepo,
@@ -26,6 +26,35 @@ test("sends an email to the user's address, returns true", async () => {
 	assert.equal(calls[0].to, "alon@example.com");
 	assert.equal(calls[0].from, "sender@example.com");
 	assert.match(calls[0].text, /W\.O\.D/);
+	assert.match(calls[0].text, /^Hi alon,/);
+});
+
+test("each notification is addressed and greeted for exactly one user — no cross-delivery between accounts", async () => {
+	// Regression test for a reported bug: two different users both received
+	// each other's enrollment confirmation. Simulates both users' jobs firing
+	// (e.g. training partners booking the same class) and asserts each of the
+	// two resulting emails is independently addressed to — and greets — only
+	// the user whose job it was.
+	const calls = [];
+	const users = {
+		1: { email: "alon@example.com", username: "alon", email_notifications_enabled: 1 },
+		2: { email: "roei@example.com", username: "roei", email_notifications_enabled: 1 },
+	};
+	const usersRepo = { findById: (id) => users[id] };
+	const notify = createEmailNotifier({
+		transporter: fakeTransporter(calls),
+		usersRepo,
+		fromEmailProvider: () => "sender@example.com",
+	});
+
+	await notify(1, "success", { className: "PUMP Hall B", date: "2026-08-04", time: "17:30" });
+	await notify(2, "success", { className: "PUMP Hall B", date: "2026-08-04", time: "17:30" });
+
+	assert.equal(calls.length, 2);
+	assert.equal(calls[0].to, "alon@example.com");
+	assert.match(calls[0].text, /^Hi alon,/);
+	assert.equal(calls[1].to, "roei@example.com");
+	assert.match(calls[1].text, /^Hi roei,/);
 });
 
 test("does nothing and returns true when the user has no email set", async () => {

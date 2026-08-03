@@ -8,23 +8,31 @@ const SUBJECTS = {
 	reminder: "Class reminder",
 };
 
-function formatBody(event, payload) {
+function formatBody(event, payload, username) {
 	const { className, date, time, detail, minutesBefore } = payload;
 	const base = `${className} on ${date} at ${time}`;
+	const greeting = `Hi ${username || "there"},`;
+	let message;
 	switch (event) {
 		case "success":
-			return `You're enrolled: ${base}.`;
+			message = `You're enrolled: ${base}.`;
+			break;
 		case "waitlisted":
-			return `You're on the waitlist: ${base}. Arbox will email you directly if a spot opens up.`;
+			message = `You're on the waitlist: ${base}. Arbox will email you directly if a spot opens up.`;
+			break;
 		case "failed":
-			return `Enrollment failed: ${base}.${detail ? ` Reason: ${detail}` : ""}`;
+			message = `Enrollment failed: ${base}.${detail ? ` Reason: ${detail}` : ""}`;
+			break;
 		case "missed":
-			return `Missed the registration window: ${base}.${detail ? ` ${detail}` : ""}`;
+			message = `Missed the registration window: ${base}.${detail ? ` ${detail}` : ""}`;
+			break;
 		case "reminder":
-			return `Reminder: ${base} — starting in ${minutesBefore} minutes.`;
+			message = `Reminder: ${base} — starting in ${minutesBefore} minutes.`;
+			break;
 		default:
-			return `${event}: ${base}.${detail ? ` ${detail}` : ""}`;
+			message = `${event}: ${base}.${detail ? ` ${detail}` : ""}`;
 	}
+	return `${greeting}\n\n${message}`;
 }
 
 export function createEmailNotifier({ transporter, usersRepo, fromEmailProvider }) {
@@ -36,7 +44,7 @@ export function createEmailNotifier({ transporter, usersRepo, fromEmailProvider 
 				from: fromEmailProvider(),
 				to: user.email,
 				subject: SUBJECTS[event] || `Arbox: ${event}`,
-				text: formatBody(event, payload),
+				text: formatBody(event, payload, user.username),
 			});
 			return true;
 		} catch (err) {
