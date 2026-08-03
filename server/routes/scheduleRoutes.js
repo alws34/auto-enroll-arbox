@@ -45,6 +45,7 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, u
 					endTime: c.end_time,
 					name: c.box_categories?.name?.trim(),
 					coach: c.coach?.full_name,
+					workoutId: c.workout_id || null,
 					maxUsers: c.max_users,
 					bookedCount: (c.booked_users || []).length,
 					enableRegistrationTime: c.enable_registration_time,

@@ -110,7 +110,13 @@ export function SchedulePage() {
 			<DayTabs days={days} selectedDate={selectedDate} onSelect={setSelectedDate} />
 			<div className="class-list">
 				{visibleClasses.map((c) => (
-					<ClassRow key={c.id} classInfo={c} onSchedule={handleSchedule} onCancel={() => handleCancel(c)} />
+					<ClassRow
+						key={c.id}
+						classInfo={c}
+						onSchedule={handleSchedule}
+						onCancel={() => handleCancel(c)}
+						onSelect={setModalClass}
+					/>
 				))}
 				{visibleClasses.length === 0 && <p className="page-status">No classes this day.</p>}
 			</div>

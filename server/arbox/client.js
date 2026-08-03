@@ -108,5 +108,29 @@ export function createArboxClient({ fetchImpl = nodeFetch } = {}) {
 		return { used };
 	}
 
-	return { login, getMembership, getScheduleBetweenDates, enroll, cancel, getQuota };
+	// The gym's coaches attach a "WOD" (workout of the day) to a class via
+	// Arbox's own logbook feature, keyed by workout_id (present on the raw
+	// schedule object from getScheduleBetweenDates, shared across every
+	// session of the same class on the same day — not per individual
+	// booking). This isn't exposed by this box's booking widget at all and
+	// isn't in any published Arbox API docs; reverse-engineered by capturing
+	// the official mobile app's traffic. The response is deeply nested
+	// (data: [[[ {...} ]]]) — presumably to allow multiple parts/rounds per
+	// workout — so we flatten it fully.
+	async function getWorkoutLogbook(token, refreshToken, workoutId) {
+		const res = await fetchImpl(`${BASE_URL}/api/v2/logbook/workout/${workoutId}`, {
+			method: "GET",
+			headers: authHeaders(token, refreshToken),
+		});
+		const body = await res.json();
+		if (res.status !== 200) throw new Error(`Arbox workout fetch failed: ${JSON.stringify(body)}`);
+		const entries = (body?.data || []).flat(Infinity).filter(Boolean);
+		return entries.map((e) => ({
+			section: e.box_sections?.name || null,
+			text: e.comment || "",
+			date: e.name || null,
+		}));
+	}
+
+	return { login, getMembership, getScheduleBetweenDates, enroll, cancel, getQuota, getWorkoutLogbook };
 }

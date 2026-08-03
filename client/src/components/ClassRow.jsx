@@ -10,10 +10,10 @@ function formatCountdown(fireAtIso) {
 	return `opens in ${minutes}m`;
 }
 
-export function ClassRow({ classInfo, onSchedule, onCancel }) {
+export function ClassRow({ classInfo, onSchedule, onCancel, onSelect }) {
 	const full = classInfo.bookedCount >= classInfo.maxUsers;
 	return (
-		<div className="class-row">
+		<div className="class-row class-row-clickable" onClick={() => onSelect?.(classInfo)}>
 			<div className="class-row-main">
 				<div className="class-row-time">{classInfo.time}</div>
 				<div className="class-row-name">{classInfo.name}</div>
@@ -26,11 +26,23 @@ export function ClassRow({ classInfo, onSchedule, onCancel }) {
 				)}
 			</div>
 			{classInfo.alreadyScheduled ? (
-				<button className="btn btn-secondary" onClick={onCancel}>
+				<button
+					className="btn btn-secondary"
+					onClick={(e) => {
+						e.stopPropagation();
+						onCancel(e);
+					}}
+				>
 					Cancel
 				</button>
 			) : (
-				<button className="btn btn-primary" onClick={() => onSchedule(classInfo)}>
+				<button
+					className="btn btn-primary"
+					onClick={(e) => {
+						e.stopPropagation();
+						onSchedule(classInfo);
+					}}
+				>
 					Schedule
 				</button>
 			)}

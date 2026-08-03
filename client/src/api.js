@@ -62,4 +62,5 @@ export const api = {
 			}),
 		}),
 	deleteReminder: (id) => request(`/reminders/${id}`, { method: "DELETE" }),
+	getWorkout: (workoutId) => request(`/workout/${workoutId}`),
 };

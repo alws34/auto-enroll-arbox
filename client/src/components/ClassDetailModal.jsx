@@ -16,6 +16,7 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 	const [reminders, setReminders] = useState([]);
 	const [addingMinutes, setAddingMinutes] = useState(REMINDER_OPTIONS[0].value);
 	const [error, setError] = useState(null);
+	const [workout, setWorkout] = useState({ status: "idle", sections: [] });
 
 	useEffect(() => {
 		if (!classInfo) return;
@@ -24,6 +25,18 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 			.then(setReminders)
 			.catch((err) => setError(err.message));
 	}, [classInfo?.id]);
+
+	useEffect(() => {
+		if (!classInfo?.workoutId) {
+			setWorkout({ status: "idle", sections: [] });
+			return;
+		}
+		setWorkout({ status: "loading", sections: [] });
+		api
+			.getWorkout(classInfo.workoutId)
+			.then((res) => setWorkout({ status: "loaded", sections: res.sections || [] }))
+			.catch(() => setWorkout({ status: "error", sections: [] }));
+	}, [classInfo?.workoutId]);
 
 	if (!classInfo) return null;
 
@@ -83,9 +96,26 @@ export function ClassDetailModal({ classInfo, onClose, onCancel }) {
 				<div className={`job-status-badge job-status-${classInfo.jobStatus}`}>{classInfo.jobStatus}</div>
 
 				<h3>Workout</h3>
-				<p className="modal-note">
-					This gym doesn't publish a workout plan through Arbox for this class — check the board at the box.
-				</p>
+				{!classInfo.workoutId && (
+					<p className="modal-note">
+						This gym hasn't published a workout plan for this class yet — check the board at the box.
+					</p>
+				)}
+				{classInfo.workoutId && workout.status === "loading" && <p className="modal-note">Loading workout…</p>}
+				{classInfo.workoutId && workout.status === "error" && (
+					<p className="modal-note">Couldn't load the workout right now — check the board at the box.</p>
+				)}
+				{classInfo.workoutId && workout.status === "loaded" && workout.sections.length === 0 && (
+					<p className="modal-note">No workout details published for this class yet.</p>
+				)}
+				{classInfo.workoutId &&
+					workout.status === "loaded" &&
+					workout.sections.map((section, i) => (
+						<div className="workout-section" key={i}>
+							{section.section && <h4 className="workout-section-title">{section.section}</h4>}
+							<p className="workout-section-text">{section.text}</p>
+						</div>
+					))}
 
 				<h3>Reminders</h3>
 				{reminders.map((r) => (

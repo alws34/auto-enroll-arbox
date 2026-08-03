@@ -145,3 +145,40 @@ test("getQuota returns used = past + future registrations", async () => {
 	const quota = await client.getQuota("t1", "r1");
 	assert.equal(quota.used, 4);
 });
+
+test("getWorkoutLogbook flattens Arbox's deeply-nested response into section/text pairs", async () => {
+	// Real shape captured from the official Arbox mobile app (GET
+	// /api/v2/logbook/workout/{workoutId}) — nested as data: [[[ {...} ]]].
+	const fetchImpl = fakeFetch([
+		{
+			status: 200,
+			body: {
+				data: [
+					[
+						[
+							{
+								workout_id: 310859,
+								name: "2026-08-03",
+								comment: "Bulgarian Split Squats\n3 Sets:\n12-10-8 Reps (each leg)",
+								box_sections: { id: 443, name: "Metcon" },
+							},
+						],
+					],
+				],
+			},
+		},
+	]);
+	const client = createArboxClient({ fetchImpl });
+	const sections = await client.getWorkoutLogbook("t1", "r1", 310859);
+	assert.deepEqual(sections, [
+		{ section: "Metcon", text: "Bulgarian Split Squats\n3 Sets:\n12-10-8 Reps (each leg)", date: "2026-08-03" },
+	]);
+	assert.ok(fetchImpl.calls[0].url.endsWith("/api/v2/logbook/workout/310859"));
+});
+
+test("getWorkoutLogbook returns an empty list when a class has no WOD attached", async () => {
+	const fetchImpl = fakeFetch([{ status: 200, body: { data: [] } }]);
+	const client = createArboxClient({ fetchImpl });
+	const sections = await client.getWorkoutLogbook("t1", "r1", 999);
+	assert.deepEqual(sections, []);
+});

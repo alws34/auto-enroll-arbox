@@ -14,6 +14,8 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .day-tab-active { background: #3ab0f2; color: #041; border-color: #3ab0f2; }
 .class-list { display: flex; flex-direction: column; gap: 8px; }
 .class-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2e; border-radius: 10px; padding: 10px 12px; }
+.class-row-clickable { cursor: pointer; }
+.class-row-clickable:hover { border-color: #444; }
 .class-row-time { font-weight: bold; }
 .class-row-meta { font-size: 12px; opacity: 0.7; }
 .class-row-status { font-size: 12px; color: #e0a000; margin-top: 4px; }
@@ -48,6 +50,9 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .modal-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: #eee; font-size: 20px; cursor: pointer; }
 .modal-meta { font-size: 13px; opacity: 0.8; margin: 4px 0; }
 .modal-note { font-size: 12px; opacity: 0.7; }
+.workout-section { margin: 10px 0; }
+.workout-section-title { font-size: 13px; margin: 0 0 4px; opacity: 0.9; }
+.workout-section-text { font-size: 13px; white-space: pre-wrap; margin: 0; }
 .modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .modal-actions .btn { text-align: center; text-decoration: none; }
 .btn-row { display: flex; gap: 8px; }
