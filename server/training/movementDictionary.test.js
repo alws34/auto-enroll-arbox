@@ -36,3 +36,30 @@ test("findMuscleGroups handles plurals and hyphen/space variants for the same mo
 	assert.deepEqual(new Set(findMuscleGroups("push-ups").groups), new Set(["chest", "triceps", "front-deltoids"]));
 	assert.deepEqual(new Set(findMuscleGroups("push ups").groups), new Set(["chest", "triceps", "front-deltoids"]));
 });
+
+// Regression test for a real WOD the user reported as under-tagged: it only
+// came back as gluteal/hamstring/lower-back because "Knees-to-Elbows" and
+// "H.S Walk" weren't in the dictionary yet (only "American KB Swings"
+// matched), missing the core/shoulder/grip/lat demand the workout's own
+// stimulus notes call out explicitly.
+test("findMuscleGroups fully tags a real HS-walk / knees-to-elbows / American KB swing WOD", () => {
+	const text = `
+		Metcon:
+		18:00 AMRAP
+		15m H.S Walk
+		10 Knees-to-Elbows
+		10 American KB Swings (32/24kg)
+		15m H.S Walk
+		20 Knees-to-Elbows
+		20 American KB Swings
+		15m H.S Walk
+		25 Knees-to-Elbows
+		25 American KB Swings
+	`;
+	const { groups, matchedMovements } = findMuscleGroups(text);
+	assert.deepEqual(
+		new Set(groups),
+		new Set(["gluteal", "hamstring", "lower-back", "forearm", "front-deltoids", "abs", "upper-back", "triceps"])
+	);
+	assert.deepEqual(new Set(matchedMovements), new Set(["kb swing", "american kb swing", "knees-to-elbows", "handstand walk"]));
+});

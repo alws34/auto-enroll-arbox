@@ -50,7 +50,7 @@ test("GET /api/workout/:workoutId returns the sections from Arbox's logbook", as
 test("GET /api/workout/:workoutId also tags the class with the muscle groups its WOD text implies", async () => {
 	const { app, cookie } = setup([{ section: "Metcon", text: "20 KB Swings", date: "2026-08-03" }]);
 	const res = await request(app).get("/api/workout/310859").set("Cookie", cookie);
-	assert.deepEqual(new Set(res.body.muscleGroups), new Set(["gluteal", "hamstring", "lower-back"]));
+	assert.deepEqual(new Set(res.body.muscleGroups), new Set(["gluteal", "hamstring", "lower-back", "forearm"]));
 });
 
 test("GET /api/workout/:workoutId returns which movement keywords were recognized in the text", async () => {

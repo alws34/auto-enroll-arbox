@@ -32,6 +32,8 @@ const MOVEMENT_LINKS = {
 	burpee: "https://www.crossfit.com/essentials/the-burpee-2",
 	"double under": "https://www.crossfit.com/essentials/the-double-under",
 	"farmer carry": "https://www.crossfit.com/essentials/the-farmer-carry",
+	"knees-to-elbows": "https://www.crossfit.com/essentials/the-strict-knees-to-elbow",
+	"handstand walk": "https://www.crossfit.com/essentials/the-handstand-walk",
 };
 
 export function movementLink(keyword) {
