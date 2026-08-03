@@ -24,6 +24,15 @@ test("a class with no WOD text falls back to the category guess, source 'categor
 	assert.equal(totals.abs, 1);
 });
 
+test("a HYROX class with no WOD posted falls back to a legs/grip/cardio guess (found via a real-world audit, not left untagged)", () => {
+	const { breakdown } = computeMuscleCoverage([{ id: 99, date: "2026-08-10", name: "HYROX", workoutText: null }]);
+	assert.equal(breakdown[0].source, "category");
+	assert.deepEqual(
+		new Set(breakdown[0].muscleGroups),
+		new Set(["quadriceps", "hamstring", "calves", "gluteal", "forearm", "abs", "front-deltoids", "upper-back", "trapezius"])
+	);
+});
+
 test("a class whose WOD text matches no known movement also falls back to the category guess", () => {
 	const { breakdown } = computeMuscleCoverage([
 		{ id: 3, date: "2026-08-05", name: "PUMP Hall B", workoutText: "Coach's birthday, bring snacks" },

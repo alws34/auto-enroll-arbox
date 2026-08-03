@@ -38,6 +38,7 @@ const CATEGORY_RULES = [
 	{ keyword: "yoga", groups: ["abs"] },
 	{ keyword: "mobility", groups: ["abs"] },
 	{ keyword: "stretch", groups: ["abs"] },
+	{ keyword: "hyrox", groups: ["quadriceps", "hamstring", "calves", "gluteal", "forearm", "abs", "front-deltoids", "upper-back", "trapezius"] },
 ];
 
 export function categoryFallbackGroups(categoryName) {

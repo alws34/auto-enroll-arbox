@@ -40,6 +40,10 @@ const CATEGORY_RULES = [
 	{ keyword: "yoga", groups: ["abs"] },
 	{ keyword: "mobility", groups: ["abs"] },
 	{ keyword: "stretch", groups: ["abs"] },
+	// HYROX-style stations (ski erg, sled push/pull, burpee broad jumps, row,
+	// farmers carry, sandbag lunges, wall balls, running) — heavy legs/grip/
+	// cardio, with upper-back and shoulders from the erg/carry stations.
+	{ keyword: "hyrox", groups: ["quadriceps", "hamstring", "calves", "gluteal", "forearm", "abs", "front-deltoids", "upper-back", "trapezius"] },
 ];
 
 export function categoryFallbackGroups(categoryName) {
