@@ -45,7 +45,7 @@ test("totals aggregate across the whole week, one count per class per group even
 	]);
 	assert.equal(totals.quadriceps, 2); // two classes touched quads, not four (repeated mentions don't inflate the count)
 	assert.equal(totals.gluteal, 2);
-	assert.equal(totals.abs, 1); // from the gymnastics fallback
+	assert.equal(totals.abs, 3); // squats brace the core too, plus the gymnastics fallback
 });
 
 test("real-world gap scenario: a week with no leg-focused class shows zero across all leg-related groups", () => {

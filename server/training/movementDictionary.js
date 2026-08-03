@@ -29,15 +29,15 @@ export const MUSCLE_GROUPS = [
 // Order doesn't matter — a single WOD can (and usually does) match several
 // movements at once, e.g. "21-15-9 Thrusters / Pull-ups" hits both.
 const MOVEMENTS = [
-	{ keywords: ["back squat", "front squat", "air squat", "goblet squat", "overhead squat", "squat"], groups: ["quadriceps", "gluteal"] },
+	{ keywords: ["back squat", "front squat", "air squat", "goblet squat", "overhead squat", "squat"], groups: ["quadriceps", "gluteal", "abs"] },
 	{ keywords: ["deadlift"], groups: ["lower-back", "hamstring", "gluteal"] },
 	{ keywords: ["lunge"], groups: ["quadriceps", "gluteal"] },
 	{ keywords: ["step-up", "step up"], groups: ["quadriceps", "gluteal"] },
 	{ keywords: ["box jump"], groups: ["quadriceps", "gluteal", "calves"] },
 	{ keywords: ["wall ball", "wall-ball"], groups: ["quadriceps", "gluteal", "front-deltoids"] },
 	{ keywords: ["thruster"], groups: ["quadriceps", "gluteal", "front-deltoids", "triceps"] },
-	{ keywords: ["clean"], groups: ["lower-back", "quadriceps", "gluteal", "trapezius", "front-deltoids"] },
-	{ keywords: ["snatch"], groups: ["lower-back", "quadriceps", "gluteal", "trapezius", "front-deltoids"] },
+	{ keywords: ["clean"], groups: ["lower-back", "quadriceps", "gluteal", "trapezius", "front-deltoids", "abs", "forearm"] },
+	{ keywords: ["snatch"], groups: ["lower-back", "quadriceps", "gluteal", "trapezius", "front-deltoids", "abs", "forearm"] },
 	{ keywords: ["jerk"], groups: ["front-deltoids", "triceps", "quadriceps"] },
 	{ keywords: ["push press"], groups: ["front-deltoids", "triceps"] },
 	{ keywords: ["strict press", "overhead press", "shoulder press", "press"], groups: ["front-deltoids", "triceps"] },
@@ -46,7 +46,7 @@ const MOVEMENTS = [
 	{ keywords: ["pull-up", "pull up", "chin-up", "chin up"], groups: ["upper-back", "biceps", "forearm"] },
 	{ keywords: ["muscle-up", "muscle up"], groups: ["upper-back", "chest", "triceps", "biceps"] },
 	{ keywords: ["rope climb"], groups: ["upper-back", "biceps", "forearm"] },
-	{ keywords: ["row", "rowing", "erg"], groups: ["upper-back", "back-deltoids", "biceps"] },
+	{ keywords: ["row", "rowing", "erg"], groups: ["upper-back", "back-deltoids", "biceps", "abs", "forearm"] },
 	{ keywords: ["push-up", "push up", "push-ups", "push ups"], groups: ["chest", "triceps", "front-deltoids"] },
 	{ keywords: ["bench press"], groups: ["chest", "triceps", "front-deltoids"] },
 	{ keywords: ["dip"], groups: ["chest", "triceps"] },

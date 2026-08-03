@@ -11,7 +11,7 @@ test("findMuscleGroups matches multiple movements in a real WOD and dedupes grou
 
 test("findMuscleGroups matches whole words only — 'rowing' isn't caught by an unrelated substring", () => {
 	const { groups } = findMuscleGroups("500m Row for time");
-	assert.deepEqual(new Set(groups), new Set(["upper-back", "back-deltoids", "biceps"]));
+	assert.deepEqual(new Set(groups), new Set(["upper-back", "back-deltoids", "biceps", "abs", "forearm"]));
 });
 
 test("findMuscleGroups does not false-positive on unrelated text", () => {
@@ -32,7 +32,7 @@ test("findMuscleGroups only ever returns groups from the known MUSCLE_GROUPS lis
 });
 
 test("findMuscleGroups handles plurals and hyphen/space variants for the same movement", () => {
-	assert.deepEqual(new Set(findMuscleGroups("3 squats").groups), new Set(["quadriceps", "gluteal"]));
+	assert.deepEqual(new Set(findMuscleGroups("3 squats").groups), new Set(["quadriceps", "gluteal", "abs"]));
 	assert.deepEqual(new Set(findMuscleGroups("push-ups").groups), new Set(["chest", "triceps", "front-deltoids"]));
 	assert.deepEqual(new Set(findMuscleGroups("push ups").groups), new Set(["chest", "triceps", "front-deltoids"]));
 });
@@ -62,4 +62,41 @@ test("findMuscleGroups fully tags a real HS-walk / knees-to-elbows / American KB
 		new Set(["gluteal", "hamstring", "lower-back", "forearm", "front-deltoids", "abs", "upper-back", "triceps"])
 	);
 	assert.deepEqual(new Set(matchedMovements), new Set(["kb swing", "american kb swing", "knees-to-elbows", "handstand walk"]));
+});
+
+// Regression test for a second real WOD the user checked with Gemini: it
+// correctly got 10 groups (all the leg/back/shoulder demand from rowing,
+// biking, and squat cleans) but missed abs (core bracing under a loaded
+// squat/catch, and during the rowing stroke) and forearm (grip through 100
+// reps of cleans and holding the rower handle).
+test("findMuscleGroups fully tags a real row/bike/squat-clean partner WOD", () => {
+	const text = `
+		Metcon
+		30:00 Clock (with a partner)
+		6 Total Rounds:
+		500m Row / 1000m Bike
+		- partners alternate efforts (3 each)
+		Once the 6 rounds are complete, perform:
+		100 Squat Cleans
+		- One Person works at a time
+	`;
+	const { groups, matchedMovements } = findMuscleGroups(text);
+	assert.deepEqual(
+		new Set(groups),
+		new Set([
+			"quadriceps",
+			"gluteal",
+			"abs",
+			"lower-back",
+			"trapezius",
+			"front-deltoids",
+			"forearm",
+			"upper-back",
+			"back-deltoids",
+			"biceps",
+			"hamstring",
+			"calves",
+		])
+	);
+	assert.deepEqual(new Set(matchedMovements), new Set(["back squat", "clean", "row", "bike"]));
 });
