@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { buildGoogleCalendarUrl } from "../googleCalendar.js";
 import { api } from "../api.js";
-import { MuscleMap, MUSCLE_GROUPS } from "./MuscleMap.jsx";
+import { MuscleMap, formatMuscleName } from "./MuscleMap.jsx";
 import { categoryFallbackGroups } from "../muscleCategoryFallback.js";
+import { movementLink } from "../movementLinks.js";
 
 const REMINDER_OPTIONS = [
 	{ value: 15, label: "15 minutes before" },
@@ -34,11 +35,18 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 			setWorkout({ status: "idle", sections: [] });
 			return;
 		}
-		setWorkout({ status: "loading", sections: [], muscleGroups: [] });
+		setWorkout({ status: "loading", sections: [], muscleGroups: [], matchedMovements: [] });
 		api
 			.getWorkout(classInfo.workoutId)
-			.then((res) => setWorkout({ status: "loaded", sections: res.sections || [], muscleGroups: res.muscleGroups || [] }))
-			.catch(() => setWorkout({ status: "error", sections: [], muscleGroups: [] }));
+			.then((res) =>
+				setWorkout({
+					status: "loaded",
+					sections: res.sections || [],
+					muscleGroups: res.muscleGroups || [],
+					matchedMovements: res.matchedMovements || [],
+				})
+			)
+			.catch(() => setWorkout({ status: "error", sections: [], muscleGroups: [], matchedMovements: [] }));
 	}, [classInfo?.workoutId]);
 
 	if (!classInfo) return null;
@@ -48,7 +56,7 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 	// or its text didn't match any known movement — same rule the weekly
 	// coverage endpoint uses, just computed here instead of round-tripping.
 	const classMuscleGroups = workout.muscleGroups?.length > 0 ? workout.muscleGroups : categoryFallbackGroups(classInfo.name);
-	const classMuscleTotals = Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, classMuscleGroups.includes(g) ? 1 : 0]));
+	const classMuscleMapData = [{ name: classInfo.name, muscles: classMuscleGroups }];
 
 	const calendarUrl = buildGoogleCalendarUrl({
 		title: classInfo.name,
@@ -123,8 +131,8 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 				<h3>Muscle groups</h3>
 				{classMuscleGroups.length > 0 ? (
 					<>
-						<MuscleMap totals={classMuscleTotals} size="compact" />
-						<p className="modal-note">{classMuscleGroups.join(", ")}</p>
+						<MuscleMap data={classMuscleMapData} size="compact" />
+						<p className="modal-note">{classMuscleGroups.map(formatMuscleName).join(", ")}</p>
 					</>
 				) : (
 					<p className="modal-note">Not enough info to guess yet.</p>
@@ -151,6 +159,23 @@ export function ClassDetailModal({ classInfo, onClose, onCancel, onSchedule }) {
 							<p className="workout-section-text">{section.text}</p>
 						</div>
 					))}
+				{workout.matchedMovements?.length > 0 && (
+					<div className="movement-links">
+						{workout.matchedMovements.map((keyword) => {
+							const url = movementLink(keyword);
+							const label = keyword.replace(/\b\w/g, (c) => c.toUpperCase());
+							return url ? (
+								<a key={keyword} className="movement-link" href={url} target="_blank" rel="noopener noreferrer">
+									{label} ↗
+								</a>
+							) : (
+								<span key={keyword} className="movement-link movement-link-plain">
+									{label}
+								</span>
+							);
+						})}
+					</div>
+				)}
 
 				<h3>Reminders</h3>
 				{reminders.map((r) => (

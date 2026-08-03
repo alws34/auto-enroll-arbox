@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
-import { MuscleMap } from "../components/MuscleMap.jsx";
+import { MuscleMap, formatMuscleName } from "../components/MuscleMap.jsx";
 
 const WEEK_LENGTH = 7;
 
@@ -42,7 +42,9 @@ export function TrainingPlanPage() {
 
 	const gaps = Object.entries(data.totals)
 		.filter(([, count]) => count === 0)
-		.map(([group]) => group);
+		.map(([group]) => formatMuscleName(group));
+
+	const muscleMapData = data.breakdown.map((c) => ({ name: c.name, muscles: c.muscleGroups }));
 
 	return (
 		<div className="training-plan-page">
@@ -62,7 +64,7 @@ export function TrainingPlanPage() {
 				Based on the classes you've booked or waitlisted into this week — not everything you've ever attended.
 			</p>
 
-			<MuscleMap totals={data.totals} />
+			<MuscleMap data={muscleMapData} />
 
 			{gaps.length > 0 ? (
 				<p className="training-gap-callout">Nothing booked yet for: {gaps.join(", ")}.</p>
@@ -79,7 +81,8 @@ export function TrainingPlanPage() {
 							<div className="class-row-name">{c.name}</div>
 							<div className="class-row-meta">{c.date}</div>
 							<div className="class-row-meta">
-								{c.muscleGroups.length > 0 ? c.muscleGroups.join(", ") : "No muscle groups identified"} · {SOURCE_LABEL[c.source]}
+								{c.muscleGroups.length > 0 ? c.muscleGroups.map(formatMuscleName).join(", ") : "No muscle groups identified"} ·{" "}
+								{SOURCE_LABEL[c.source]}
 							</div>
 						</div>
 					</div>

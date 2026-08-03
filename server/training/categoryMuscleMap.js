@@ -4,21 +4,42 @@
 // so rules match on a keyword found anywhere in the name rather than an
 // exact match. Edit this list to match your own box's actual class names —
 // it's a static guess, not derived from anything Arbox provides.
+//
+// Group names match react-body-highlighter's muscle slugs — keep this file,
+// movementDictionary.js, and client/src/muscleCategoryFallback.js in sync.
+const FULL_BODY = [
+	"chest",
+	"upper-back",
+	"lower-back",
+	"front-deltoids",
+	"back-deltoids",
+	"biceps",
+	"triceps",
+	"forearm",
+	"abs",
+	"obliques",
+	"quadriceps",
+	"hamstring",
+	"gluteal",
+	"calves",
+	"trapezius",
+];
+
 const CATEGORY_RULES = [
-	{ keyword: "pump", groups: ["Chest", "Back", "Shoulders", "Arms"] },
-	{ keyword: "gymnastics", groups: ["Core", "Shoulders", "Arms"] },
-	{ keyword: "weightlifting", groups: ["Back", "Quads", "Glutes", "Shoulders"] },
-	{ keyword: "olympic", groups: ["Back", "Quads", "Glutes", "Shoulders"] },
-	{ keyword: "w.o.d", groups: ["Chest", "Back", "Shoulders", "Arms", "Core", "Quads", "Hamstrings", "Glutes", "Calves"] },
-	{ keyword: "wod", groups: ["Chest", "Back", "Shoulders", "Arms", "Core", "Quads", "Hamstrings", "Glutes", "Calves"] },
-	{ keyword: "crossfit", groups: ["Chest", "Back", "Shoulders", "Arms", "Core", "Quads", "Hamstrings", "Glutes", "Calves"] },
-	{ keyword: "metcon", groups: ["Chest", "Back", "Shoulders", "Arms", "Core", "Quads", "Hamstrings", "Glutes", "Calves"] },
-	{ keyword: "endurance", groups: ["Quads", "Hamstrings", "Calves"] },
-	{ keyword: "cardio", groups: ["Quads", "Hamstrings", "Calves"] },
-	{ keyword: "run", groups: ["Quads", "Hamstrings", "Calves"] },
-	{ keyword: "yoga", groups: ["Core"] },
-	{ keyword: "mobility", groups: ["Core"] },
-	{ keyword: "stretch", groups: ["Core"] },
+	{ keyword: "pump", groups: ["chest", "upper-back", "front-deltoids", "biceps", "triceps"] },
+	{ keyword: "gymnastics", groups: ["abs", "front-deltoids", "biceps", "upper-back"] },
+	{ keyword: "weightlifting", groups: ["lower-back", "quadriceps", "gluteal", "front-deltoids", "trapezius"] },
+	{ keyword: "olympic", groups: ["lower-back", "quadriceps", "gluteal", "front-deltoids", "trapezius"] },
+	{ keyword: "w.o.d", groups: FULL_BODY },
+	{ keyword: "wod", groups: FULL_BODY },
+	{ keyword: "crossfit", groups: FULL_BODY },
+	{ keyword: "metcon", groups: FULL_BODY },
+	{ keyword: "endurance", groups: ["quadriceps", "hamstring", "calves"] },
+	{ keyword: "cardio", groups: ["quadriceps", "hamstring", "calves"] },
+	{ keyword: "run", groups: ["quadriceps", "hamstring", "calves"] },
+	{ keyword: "yoga", groups: ["abs"] },
+	{ keyword: "mobility", groups: ["abs"] },
+	{ keyword: "stretch", groups: ["abs"] },
 ];
 
 export function categoryFallbackGroups(categoryName) {

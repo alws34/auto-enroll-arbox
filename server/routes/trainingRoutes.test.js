@@ -66,8 +66,8 @@ test("GET /api/training/coverage fetches WOD text for booked classes that have a
 	const res = await request(app).get("/api/training/coverage?days=7").set("Cookie", cookie);
 	assert.deepEqual(workoutCalls, [999]);
 	assert.equal(res.body.breakdown[0].source, "wod");
-	assert.deepEqual(new Set(res.body.breakdown[0].muscleGroups), new Set(["Back", "Hamstrings", "Glutes", "Arms"]));
-	assert.equal(res.body.totals.Back, 1);
+	assert.deepEqual(new Set(res.body.breakdown[0].muscleGroups), new Set(["lower-back", "hamstring", "gluteal", "upper-back", "biceps", "forearm"]));
+	assert.equal(res.body.totals["lower-back"], 1);
 });
 
 test("GET /api/training/coverage falls back to category when a class has no workout_id", async () => {
@@ -76,7 +76,7 @@ test("GET /api/training/coverage falls back to category when a class has no work
 	]);
 	const res = await request(app).get("/api/training/coverage?days=7").set("Cookie", cookie);
 	assert.equal(res.body.breakdown[0].source, "category");
-	assert.deepEqual(new Set(res.body.breakdown[0].muscleGroups), new Set(["Core", "Shoulders", "Arms"]));
+	assert.deepEqual(new Set(res.body.breakdown[0].muscleGroups), new Set(["abs", "front-deltoids", "biceps", "upper-back"]));
 });
 
 test("GET /api/training/coverage doesn't fail the whole week if one class's WOD fetch errors", async () => {

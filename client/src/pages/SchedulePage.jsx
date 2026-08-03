@@ -8,7 +8,7 @@ import { StatusLegend } from "../components/StatusLegend.jsx";
 import { WeeklyCalendar } from "../components/WeeklyCalendar.jsx";
 import { WeekGridDesktop } from "../components/WeekGridDesktop.jsx";
 import { ClassDetailModal } from "../components/ClassDetailModal.jsx";
-import { MuscleMap, MUSCLE_GROUPS } from "../components/MuscleMap.jsx";
+import { MuscleMap } from "../components/MuscleMap.jsx";
 
 const WEEK_LENGTH = 7;
 
@@ -36,7 +36,7 @@ export function SchedulePage() {
 	const [actionError, setActionError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [modalClass, setModalClass] = useState(null);
-	const [muscleTotals, setMuscleTotals] = useState(() => Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, 0])));
+	const [muscleData, setMuscleData] = useState([]);
 
 	async function load() {
 		setLoading(true);
@@ -62,7 +62,7 @@ export function SchedulePage() {
 	useEffect(() => {
 		api
 			.getTrainingCoverage(WEEK_LENGTH, weekStart)
-			.then((data) => setMuscleTotals(data.totals))
+			.then((data) => setMuscleData(data.breakdown.map((c) => ({ name: c.name, muscles: c.muscleGroups }))))
 			.catch(() => {});
 	}, [weekStart]);
 
@@ -111,7 +111,7 @@ export function SchedulePage() {
 
 			<div className="muscle-map-summary">
 				<h3 className="section-heading">This week's muscle coverage</h3>
-				<MuscleMap totals={muscleTotals} size="compact" />
+				<MuscleMap data={muscleData} size="compact" />
 				<Link to="/training-plan" className="btn-link muscle-map-summary-link">
 					See full training plan ›
 				</Link>

@@ -21,9 +21,11 @@ export function createWorkoutRoutes({ credentialsRepo, arboxClient }) {
 			// modal's mini muscle map. Empty here just means the WOD text didn't
 			// match any known movement — the client falls back to a coarser guess
 			// from the class category in that case, same as the weekly coverage does.
-			const { groups } = findMuscleGroups(sections.map((s) => s.text).join("\n"));
+			// matchedMovements lets the client link out to CrossFit's own technique
+			// page for whatever movements were actually recognized in the text.
+			const { groups, matchedMovements } = findMuscleGroups(sections.map((s) => s.text).join("\n"));
 
-			res.json({ sections, muscleGroups: groups });
+			res.json({ sections, muscleGroups: groups, matchedMovements });
 		})
 	);
 

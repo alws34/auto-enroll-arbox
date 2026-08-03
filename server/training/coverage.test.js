@@ -7,19 +7,19 @@ test("a class with WOD text gets tagged from the movements in it, source 'wod'",
 		{ id: 1, date: "2026-08-04", name: "W.O.D Hall A", workoutText: "5 Rounds: 10 Deadlifts, 10 Pull-ups" },
 	]);
 	assert.equal(breakdown[0].source, "wod");
-	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["Back", "Hamstrings", "Glutes", "Arms"]));
-	assert.equal(totals.Back, 1);
-	assert.equal(totals.Hamstrings, 1);
-	assert.equal(totals.Glutes, 1);
-	assert.equal(totals.Arms, 1);
-	assert.equal(totals.Chest, 0);
+	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["lower-back", "hamstring", "gluteal", "upper-back", "biceps", "forearm"]));
+	assert.equal(totals["lower-back"], 1);
+	assert.equal(totals.hamstring, 1);
+	assert.equal(totals.gluteal, 1);
+	assert.equal(totals.biceps, 1);
+	assert.equal(totals.chest, 0);
 });
 
 test("a class with no WOD text falls back to the category guess, source 'category'", () => {
 	const { totals, breakdown } = computeMuscleCoverage([{ id: 2, date: "2026-08-05", name: "Gymnastics Hall B", workoutText: null }]);
 	assert.equal(breakdown[0].source, "category");
-	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["Core", "Shoulders", "Arms"]));
-	assert.equal(totals.Core, 1);
+	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["abs", "front-deltoids", "biceps", "upper-back"]));
+	assert.equal(totals.abs, 1);
 });
 
 test("a class whose WOD text matches no known movement also falls back to the category guess", () => {
@@ -27,7 +27,7 @@ test("a class whose WOD text matches no known movement also falls back to the ca
 		{ id: 3, date: "2026-08-05", name: "PUMP Hall B", workoutText: "Coach's birthday, bring snacks" },
 	]);
 	assert.equal(breakdown[0].source, "category");
-	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["Chest", "Back", "Shoulders", "Arms"]));
+	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["chest", "upper-back", "front-deltoids", "biceps", "triceps"]));
 });
 
 test("a class with neither a matching WOD nor a recognized category contributes nothing, source 'none'", () => {
@@ -43,9 +43,9 @@ test("totals aggregate across the whole week, one count per class per group even
 		{ id: 2, date: "2026-08-04", name: "W.O.D Hall A", workoutText: "Back squat 5x5" },
 		{ id: 3, date: "2026-08-05", name: "Gymnastics Hall B", workoutText: null },
 	]);
-	assert.equal(totals.Quads, 2); // two classes touched quads, not four (repeated mentions don't inflate the count)
-	assert.equal(totals.Glutes, 2);
-	assert.equal(totals.Core, 1); // from the gymnastics fallback
+	assert.equal(totals.quadriceps, 2); // two classes touched quads, not four (repeated mentions don't inflate the count)
+	assert.equal(totals.gluteal, 2);
+	assert.equal(totals.abs, 1); // from the gymnastics fallback
 });
 
 test("real-world gap scenario: a week with no leg-focused class shows zero across all leg-related groups", () => {
@@ -53,8 +53,8 @@ test("real-world gap scenario: a week with no leg-focused class shows zero acros
 		{ id: 1, date: "2026-08-03", name: "PUMP Hall B", workoutText: "Bench press 5x5, pull-ups 3x10" },
 		{ id: 2, date: "2026-08-04", name: "Gymnastics Hall B", workoutText: null },
 	]);
-	assert.equal(totals.Quads, 0);
-	assert.equal(totals.Hamstrings, 0);
-	assert.equal(totals.Glutes, 0);
-	assert.equal(totals.Calves, 0);
+	assert.equal(totals.quadriceps, 0);
+	assert.equal(totals.hamstring, 0);
+	assert.equal(totals.gluteal, 0);
+	assert.equal(totals.calves, 0);
 });

@@ -55,6 +55,9 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .workout-section { margin: 10px 0; }
 .workout-section-title { font-size: 13px; margin: 0 0 4px; opacity: 0.9; }
 .workout-section-text { font-size: 13px; white-space: pre-wrap; margin: 0; }
+.movement-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.movement-link { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: #1a1a1d; border: 1px solid #333; color: #3ab0f2; text-decoration: none; }
+.movement-link-plain { color: #888; }
 .modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .modal-actions .btn { text-align: center; text-decoration: none; }
 .btn-row { display: flex; gap: 8px; }
@@ -81,10 +84,8 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 .week-grid-empty { font-size: 12px; opacity: 0.3; text-align: center; padding-top: 20px; }
 
 .muscle-map { display: flex; gap: 16px; justify-content: center; margin: 12px 0 16px; }
-.muscle-map-figure { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; max-width: 200px; }
-.muscle-map-svg { width: 100%; height: auto; }
+.muscle-map-figure { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .muscle-map-label { font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
-.muscle-map-compact .muscle-map-figure { max-width: 110px; }
 .muscle-map-summary { text-align: center; margin-bottom: 14px; }
 .muscle-map-summary .muscle-map { margin-bottom: 6px; }
 .muscle-map-summary-link { display: inline-block; font-size: 12px; }
@@ -102,5 +103,4 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background:
 	.status-legend { position: static; margin-bottom: 12px; flex-direction: row; flex-wrap: wrap; background: none; border: none; padding: 0; }
 	.weekly-calendar { min-width: 0; }
 	.training-plan-page { max-width: 640px; margin: 0 auto; }
-	.muscle-map-figure { max-width: 240px; }
 }
