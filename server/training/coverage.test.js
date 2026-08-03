@@ -8,6 +8,8 @@ test("a class with WOD text gets tagged from the movements in it, source 'wod'",
 	]);
 	assert.equal(breakdown[0].source, "wod");
 	assert.deepEqual(new Set(breakdown[0].muscleGroups), new Set(["lower-back", "hamstring", "gluteal", "upper-back", "biceps", "forearm"]));
+	assert.equal(breakdown[0].needsReview, false);
+	assert.equal(breakdown[0].workoutText, null); // only kept around for classes that need review
 	assert.equal(totals["lower-back"], 1);
 	assert.equal(totals.hamstring, 1);
 	assert.equal(totals.gluteal, 1);
@@ -35,6 +37,20 @@ test("a class with neither a matching WOD nor a recognized category contributes 
 	assert.equal(breakdown[0].source, "none");
 	assert.deepEqual(breakdown[0].muscleGroups, []);
 	Object.values(totals).forEach((v) => assert.equal(v, 0));
+});
+
+test("needsReview flags a real WOD our dictionary recognized nothing in — a dictionary gap, not a missing WOD", () => {
+	const { breakdown } = computeMuscleCoverage([
+		{ id: 5, date: "2026-08-05", name: "PUMP Hall B", workoutText: "Coach's birthday, bring snacks" },
+		{ id: 6, date: "2026-08-06", name: "Gymnastics Hall B", workoutText: null },
+	]);
+	// Had text, but nothing in it matched a known movement — flagged, and the
+	// raw text is kept around so the gap is actionable.
+	assert.equal(breakdown[0].needsReview, true);
+	assert.equal(breakdown[0].workoutText, "Coach's birthday, bring snacks");
+	// No WOD was published at all — nothing to flag, this is expected/normal.
+	assert.equal(breakdown[1].needsReview, false);
+	assert.equal(breakdown[1].workoutText, null);
 });
 
 test("totals aggregate across the whole week, one count per class per group even if a movement repeats", () => {

@@ -12,11 +12,22 @@ export function computeMuscleCoverage(classes) {
 		let groups = [];
 		let source = "none";
 
+		// needsReview means the box actually published a WOD and our movement
+		// dictionary recognized nothing in it — a real gap, distinct from "no
+		// WOD was published at all". No static keyword list stays complete
+		// forever against free-text gym programming, so this flag (plus the
+		// raw text below) is how gaps get surfaced instead of silently
+		// mis-tagged via the category fallback. See TrainingPlanPage's
+		// "Coverage gaps" section and scripts/coverage-audit.js.
+		let needsReview = false;
+
 		if (c.workoutText) {
 			const { groups: wodGroups } = findMuscleGroups(c.workoutText);
 			if (wodGroups.length > 0) {
 				groups = wodGroups;
 				source = "wod";
+			} else {
+				needsReview = true;
 			}
 		}
 		if (groups.length === 0) {
@@ -31,7 +42,15 @@ export function computeMuscleCoverage(classes) {
 			if (g in totals) totals[g] += 1;
 		});
 
-		return { id: c.id, date: c.date, name: c.name, muscleGroups: groups, source };
+		return {
+			id: c.id,
+			date: c.date,
+			name: c.name,
+			muscleGroups: groups,
+			source,
+			needsReview,
+			workoutText: needsReview ? c.workoutText : null,
+		};
 	});
 
 	return { totals, breakdown };

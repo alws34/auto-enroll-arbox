@@ -45,6 +45,7 @@ export function TrainingPlanPage() {
 		.map(([group]) => formatMuscleName(group));
 
 	const muscleMapData = data.breakdown.map((c) => ({ name: c.name, muscles: c.muscleGroups }));
+	const reviewNeeded = data.breakdown.filter((c) => c.needsReview);
 
 	return (
 		<div className="training-plan-page">
@@ -83,11 +84,32 @@ export function TrainingPlanPage() {
 							<div className="class-row-meta">
 								{c.muscleGroups.length > 0 ? c.muscleGroups.map(formatMuscleName).join(", ") : "No muscle groups identified"} ·{" "}
 								{SOURCE_LABEL[c.source]}
+								{c.needsReview && " · ⚠ unrecognized workout text"}
 							</div>
 						</div>
 					</div>
 				))}
 			</div>
+
+			{reviewNeeded.length > 0 && (
+				<>
+					<h3 className="section-heading">Coverage gaps</h3>
+					<p className="modal-note">
+						These classes had a workout posted, but nothing in the text matched a known movement — the muscle map above fell back
+						to a guess from the class type instead. No fixed keyword list can keep up with every way a coach phrases a workout, so
+						this section exists to make gaps visible instead of silently guessing wrong. Share the text below to get the movement
+						dictionary extended.
+					</p>
+					{reviewNeeded.map((c) => (
+						<div className="workout-section" key={c.id}>
+							<h4 className="workout-section-title">
+								{c.name} — {c.date}
+							</h4>
+							<p className="workout-section-text">{c.workoutText}</p>
+						</div>
+					))}
+				</>
+			)}
 		</div>
 	);
 }
