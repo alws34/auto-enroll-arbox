@@ -34,6 +34,18 @@ const MOVEMENT_LINKS = {
 	"farmer carry": "https://www.crossfit.com/essentials/the-farmer-carry",
 	"knees-to-elbows": "https://www.crossfit.com/essentials/the-strict-knees-to-elbow",
 	"handstand walk": "https://www.crossfit.com/essentials/the-handstand-walk",
+	"single-under": "https://www.crossfit.com/essentials/the-single-under",
+	"good morning": "https://www.crossfit.com/essentials/the-good-morning",
+	"turkish get-up": "https://www.crossfit.com/essentials/the-dumbbell-turkish-get-up",
+	"slam ball": "https://www.crossfit.com/essentials/the-slam-ball",
+	"wall walk": "https://www.crossfit.com/essentials/the-wall-walk",
+	"windshield wiper": "https://www.crossfit.com/essentials/the-windshield-wiper",
+	"skin the cat": "https://www.crossfit.com/essentials/skin-the-cat",
+	"l-sit": "https://www.crossfit.com/essentials/the-l-sit",
+	"sots press": "https://www.crossfit.com/essentials/the-sots-press",
+	"toes-to-rings": "https://www.crossfit.com/essentials/the-strict-toes-to-rings",
+	handstand: "https://www.crossfit.com/essentials/freestanding-handstand",
+	pistol: "https://www.crossfit.com/essentials/the-single-leg-squat",
 };
 
 export function movementLink(keyword) {

@@ -125,3 +125,25 @@ test("findMuscleGroups tags hamstrings for a power snatch + push-up WOD", () => 
 	);
 	assert.deepEqual(new Set(matchedMovements), new Set(["snatch", "push-up"]));
 });
+
+// Sweep against the full official CrossFit movements list
+// (crossfit.com/crossfit-movements) to close gaps proactively rather than
+// waiting for another real-world miss. Each of these was checked against the
+// dictionary before this test was added and came back unmatched.
+test("findMuscleGroups recognizes movements added in the full CrossFit-list sweep", () => {
+	assert.deepEqual(new Set(findMuscleGroups("5 rounds of Turkish Get-ups").groups), new Set(["abs", "front-deltoids", "gluteal", "quadriceps"]));
+	assert.deepEqual(new Set(findMuscleGroups("20 Wall Walks").groups), new Set(["front-deltoids", "triceps", "abs"]));
+	assert.deepEqual(new Set(findMuscleGroups("Windshield Wipers x 15").groups), new Set(["abs", "obliques"]));
+	assert.deepEqual(new Set(findMuscleGroups("Skin the Cat x 5").groups), new Set(["back-deltoids", "upper-back", "abs"]));
+	assert.deepEqual(new Set(findMuscleGroups("L-sit hold 30s").groups), new Set(["abs", "front-deltoids"]));
+	assert.deepEqual(new Set(findMuscleGroups("Slam Balls x 20").groups), new Set(["abs", "quadriceps", "front-deltoids"]));
+	assert.deepEqual(new Set(findMuscleGroups("Good Mornings 3x8").groups), new Set(["hamstring", "gluteal", "lower-back"]));
+	// Also matches the generic "press" keyword (adds triceps) since "Sots
+	// Press" contains the word "press" — expected, not a bug.
+	assert.deepEqual(new Set(findMuscleGroups("Sots Press 5x3").groups), new Set(["front-deltoids", "quadriceps", "triceps"]));
+	assert.deepEqual(new Set(findMuscleGroups("50 Single-unders").groups), new Set(["calves"]));
+	assert.deepEqual(new Set(findMuscleGroups("Pistols x 10 each leg").groups), new Set(["quadriceps", "gluteal", "abs"]));
+	assert.deepEqual(new Set(findMuscleGroups("Strict Toes-to-rings x 10").groups), new Set(["abs", "forearm"]));
+	// Plain static-hold handstand practice, no "walk" or "push-up" in the text.
+	assert.deepEqual(new Set(findMuscleGroups("Handstand hold practice 5x30s").groups), new Set(["front-deltoids", "triceps", "abs"]));
+});

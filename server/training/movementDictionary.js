@@ -30,6 +30,7 @@ export const MUSCLE_GROUPS = [
 // movements at once, e.g. "21-15-9 Thrusters / Pull-ups" hits both.
 const MOVEMENTS = [
 	{ keywords: ["back squat", "front squat", "air squat", "goblet squat", "overhead squat", "squat"], groups: ["quadriceps", "gluteal", "abs"] },
+	{ keywords: ["pistol", "pistol squat", "single-leg squat"], groups: ["quadriceps", "gluteal", "abs"] },
 	{ keywords: ["deadlift"], groups: ["lower-back", "hamstring", "gluteal"] },
 	{ keywords: ["lunge"], groups: ["quadriceps", "gluteal"] },
 	{ keywords: ["step-up", "step up"], groups: ["quadriceps", "gluteal"] },
@@ -67,6 +68,21 @@ const MOVEMENTS = [
 	{ keywords: ["farmer carry", "farmers carry", "farmer's carry"], groups: ["forearm", "trapezius", "abs"] },
 	{ keywords: ["sled push", "sled pull"], groups: ["quadriceps", "gluteal"] },
 	{ keywords: ["calf raise"], groups: ["calves"] },
+	{ keywords: ["single-under", "single under"], groups: ["calves"] },
+	{ keywords: ["good morning"], groups: ["hamstring", "gluteal", "lower-back"] },
+	{ keywords: ["turkish get-up", "turkish getup", "turkish get up"], groups: ["abs", "front-deltoids", "gluteal", "quadriceps"] },
+	{ keywords: ["slam ball", "ball slam"], groups: ["abs", "quadriceps", "front-deltoids"] },
+	{ keywords: ["wall walk"], groups: ["front-deltoids", "triceps", "abs"] },
+	{ keywords: ["windshield wiper"], groups: ["abs", "obliques"] },
+	{ keywords: ["skin the cat"], groups: ["back-deltoids", "upper-back", "abs"] },
+	{ keywords: ["l-sit", "l sit"], groups: ["abs", "front-deltoids"] },
+	{ keywords: ["sots press"], groups: ["front-deltoids", "quadriceps"] },
+	{ keywords: ["toes-to-rings", "toes to rings"], groups: ["abs", "forearm"] },
+	// Plain static holds/practice, distinct from "handstand walk" and
+	// "handstand push-up" (which already have their own more specific
+	// entries above and will also match this one — that's fine, the groups
+	// overlap almost entirely).
+	{ keywords: ["handstand"], groups: ["front-deltoids", "triceps", "abs"] },
 ];
 
 function escapeRegExp(s) {
