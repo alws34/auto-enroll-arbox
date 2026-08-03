@@ -1,5 +1,6 @@
 import express from "express";
 import { computeFireAt, classTimesToUtc } from "../scheduling/fireAt.js";
+import { computeRegistrationStatus } from "../scheduling/classStatus.js";
 import { arboxErrorMessage, findMembershipForBooking } from "../arbox/client.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -31,12 +32,7 @@ export function createScheduleRoutes({ credentialsRepo, jobsRepo, arboxClient, u
 				const fireAt = computeFireAt(c.date, c.time, c.enable_registration_time).toISOString();
 				const { startUtc, endUtc } = classTimesToUtc(c.date, c.time, c.end_time);
 				const job = jobsByScheduleId.get(c.id);
-
-				// Arbox is the source of truth for whether the user is actually booked/waitlisted —
-				// a class registered from the official app (not through us) has no local job row at all.
-				let registrationStatus = job?.status || "none";
-				if (c.user_booked) registrationStatus = "success";
-				else if (c.user_in_standby) registrationStatus = "waitlisted";
+				const registrationStatus = computeRegistrationStatus(c, job);
 
 				return {
 					id: c.id,

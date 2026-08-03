@@ -63,4 +63,5 @@ export const api = {
 		}),
 	deleteReminder: (id) => request(`/reminders/${id}`, { method: "DELETE" }),
 	getWorkout: (workoutId) => request(`/workout/${workoutId}`),
+	getTrainingCoverage: (days = 7, from) => request(`/training/coverage?days=${days}${from ? `&from=${from}` : ""}`),
 };
