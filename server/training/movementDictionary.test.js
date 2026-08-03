@@ -100,3 +100,28 @@ test("findMuscleGroups fully tags a real row/bike/squat-clean partner WOD", () =
 	);
 	assert.deepEqual(new Set(matchedMovements), new Set(["back squat", "clean", "row", "bike"]));
 });
+
+// Regression test for a third real WOD checked with Gemini: highly accurate
+// except hamstrings were completely missing from both clean and snatch —
+// they drive the hip-hinge/hip-extension pull off the floor right alongside
+// the glutes and lower back, same as a deadlift or kb swing.
+test("findMuscleGroups tags hamstrings for a power snatch + push-up WOD", () => {
+	const text = `
+		Strength:
+		Every 2:00 x 5
+		2 Touch & Go Power Snatch
+		Metcon:
+		10:00 AMRAP
+		1-2-3-4-5..+1
+		Power Snatch
+		2-4-6-8-10..+2
+		H.R Push-Ups
+	`;
+	const { groups, matchedMovements } = findMuscleGroups(text);
+	assert.ok(groups.includes("hamstring"), "snatch should credit hamstrings for the hip-hinge pull");
+	assert.deepEqual(
+		new Set(groups),
+		new Set(["lower-back", "hamstring", "quadriceps", "gluteal", "trapezius", "front-deltoids", "abs", "forearm", "chest", "triceps"])
+	);
+	assert.deepEqual(new Set(matchedMovements), new Set(["snatch", "push-up"]));
+});
